@@ -12,6 +12,43 @@ import {
 import { ServiceBpmService } from '../services/service-bpm.service';
 import { extrairLista } from '../functions/extrair-lista';
 
+// `p-calendar` (Data/Competência) trabalha com objeto `Date`, mas o resto do
+// app representa data como string "dd/mm/yyyy" (mesmo formato real do Por
+// Lote, confirmado contra payload de `getLancamentos` em 2026-08-24/26 —
+// ex: "01/11/2024"). Sem converter, `datLct` saía com a serialização padrão
+// do `Date` (ex: "Mon Sep 01 2026 00:00:00 GMT-0300...") em vez de
+// "01/11/2024" — pedido do usuário em 2026-08-31: "formato da data
+// lançamento manual tá errada... tem que ser igual do lote DD/MM/yyyy".
+function paraDataDDMMYYYY(data: Date | string | null | undefined): string {
+  if (!data) {
+    return '';
+  }
+  const d = data instanceof Date ? data : new Date(data);
+  if (isNaN(d.getTime())) {
+    return typeof data === 'string' ? data : '';
+  }
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+// Caminho inverso — STC devolvida: `datLct` salvo é string "dd/mm/yyyy",
+// mas o `p-calendar` precisa de um objeto `Date` pra exibir a data
+// selecionada corretamente.
+function paraDataObjeto(valor: string | null | undefined): Date | null {
+  if (!valor) {
+    return null;
+  }
+  const partes = valor.split('/');
+  if (partes.length !== 3) {
+    return null;
+  }
+  const [dia, mes, ano] = partes.map(Number);
+  if (!dia || !mes || !ano) {
+    return null;
+  }
+  return new Date(ano, mes - 1, dia);
+}
+
 // Modalidade Manual (seção 18-20 do requisitos): origem e destino digitados
 // na mesma tela, sem consulta de lote. Reaproveita as mesmas listas de Conta/
 // CC/Projeto/Fase da modalidade Por Lote (mesma empresa já escolhida na Tela 1).
@@ -444,7 +481,7 @@ export class OrigemDestinoManualComponent implements OnInit {
 
     this.form.patchValue(
       {
-        dataCompetencia: origem?.datLct ?? null,
+        dataCompetencia: paraDataObjeto(origem?.datLct),
         ctaRedOrigem: origem?.ctaRed ?? null,
         codCcuOrigem: origem?.codCcu ?? null,
         numPrjOrigem: origem?.numPrj ?? null,
@@ -540,7 +577,7 @@ export class OrigemDestinoManualComponent implements OnInit {
       {
         lancamento: 'MANUAL-1',
         numLct: 'MANUAL-1',
-        datLct: v.dataCompetencia,
+        datLct: paraDataDDMMYYYY(v.dataCompetencia),
         ctaRed: v.ctaRedOrigem,
         desCta: contaOrigem?.desCta,
         codCcu: v.codCcuOrigem,

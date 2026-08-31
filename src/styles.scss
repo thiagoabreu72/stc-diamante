@@ -1,0 +1,284 @@
+/* You can add global styles to this file, and also import other style files */
+// @import "primeng/resources/themes/lara-light-blue/theme.css";
+// @import "primeng/resources/primeng.css";
+@import 'primeflex/primeflex.scss';
+
+// Recoloração do tema PrimeNG pra marca da Diamante Energia (ver comentário
+// detalhado no topo do arquivo) — precisa carregar depois do theme.css do
+// angular.json, e antes de qualquer override específico nosso abaixo.
+@import 'styles-tema-marca.scss';
+
+// Título de qualquer p-card (ex: "Resumo do Lote Selecionado", "Linhas da
+// Origem") — o tema não define cor nenhuma (herda --text-color, cinza
+// #495057), pedido do cliente pra ficar na cor da marca.
+.p-card .p-card-title {
+  color: var(--app-navy);
+}
+
+// Reintroduzido a pedido: min-height grande garante que o Cockpit já dimensiona
+// o iframe generoso desde o load inicial. Ressalva registrada antes: dentro do
+// iframe, window.innerHeight É a altura do próprio iframe, e testes anteriores
+// (1600px → 70000px) coincidiram com o painel do p-dropdown perder o scroll
+// interno (max-height deixava de limitar a 200px). O fix aplicado pro painel
+// fechando sozinho foi [appendTo]="'body'" + overflow-x-auto nas p-table (tira
+// o overflow horizontal que fazia o listener de scroll do PrimeNG fechar o
+// painel) + [virtualScroll] nos dropdowns de listas grandes. Se o sintoma do
+// scroll interno voltar, o primeiro suspeito é este valor aqui.
+// Sem isso, qualquer texto fora de um componente PrimeNG (h1/p/span soltos,
+// como os do PageHeaderComponent) cai no serifado padrão do navegador — o
+// PrimeNG só define font-family nas classes dos próprios componentes
+// (.p-component e afins), nunca em html/body. Mesma pilha usada por eles.
+html,
+body {
+  min-height: 200000px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+}
+
+// O wrapper de cada passo do p-steps (número + texto) vem com fundo branco
+// fixo no tema (`.p-menuitem-link { background: #ffffff }`), que não bate com
+// o cinza de fundo da página (#f6f6f7, definido em index.html) — aparece como
+// um quadrado branco em volta de cada passo. Só o círculo do número deve
+// continuar branco (é o badge numerado); o wrapper acompanha o fundo da página.
+.p-steps .p-steps-item .p-menuitem-link {
+  background: transparent;
+}
+
+// Badge "Recomendado" (Modalidade) — no mockup é um pill contornado (fundo
+// branco, borda e texto azul), não uma tag preenchida de azul sólido como o
+// p-tag-info padrão do PrimeNG.
+.badge-outline-info {
+  display: inline-block;
+  padding: 0.15rem 0.65rem;
+  border: 1px solid var(--primary-color);
+  border-radius: 9999px;
+  color: var(--primary-color);
+  background: var(--surface-0);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+// Checklist de validação (ex: OrigemDestinoManualComponent) — ícone de check
+// verde + badge "OK"/"Pendente" em pill colorido, no lugar de texto puro, pra
+// bater com o padrão do mockup ("Solicitação manual.png").
+.checklist-validacao {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.4rem 0;
+  }
+}
+
+// Cabeçalho de card com ícone (ex: "Resumo da Solicitação") — mesma altura/
+// peso do header padrão do p-card (usado via pTemplate="header" quando o
+// mockup mostra um ícone ao lado do título, já que [header] só aceita texto).
+.card-header-com-icone {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.25rem 1.25rem 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--app-navy);
+
+  i {
+    color: var(--app-navy);
+    font-size: 1.5rem;
+  }
+}
+
+.badge-status {
+  display: inline-block;
+  padding: 0.15rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  &.badge-status-ok {
+    color: var(--green-700);
+    background: var(--green-100);
+  }
+
+  &.badge-status-pendente {
+    color: var(--yellow-700);
+    background: var(--yellow-100);
+  }
+}
+
+// Variante maior do .badge-status pra textos mais longos (ex: "2/3
+// selecionados" em OrigemComponent) — o padding/fonte do badge original
+// (pensado pra uma palavra só, tipo "Válido") ficava apertado demais.
+.badge-status-lg {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &.badge-status-ok {
+    color: var(--green-700);
+    background: var(--green-100);
+  }
+
+  &.badge-status-pendente {
+    color: var(--yellow-700);
+    background: var(--yellow-100);
+  }
+}
+
+// Rateio/linha sem gestor identificado (Centro de Custo sem `usuRes`) — não
+// pode ser selecionado (checkbox desabilitado), destaque visual pra não
+// passar despercebido. Ver OrigemComponent.rateioSemGestor, 2026-08-27.
+.linha-sem-gestor {
+  background: var(--red-50);
+}
+
+// Débito/Crédito/Saldo — pedido do usuário em 2026-08-20 pra ficar "maior e
+// mais bonito" nas telas de resumo (AprovacaoComponent, ResumoComponent,
+// DestinoComponent, OrigemDestinoManualComponent) em vez do texto pequeno
+// label-valor em linha que tinha antes. `flex-wrap` faz o mesmo bloco servir
+// tanto pra coluna estreita (Aprovação, empilha) quanto pra linha larga
+// (Resumo/Destino, fica lado a lado).
+.resumo-financeiro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.resumo-financeiro-item {
+  flex: 1 1 130px;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: var(--surface-50);
+  border: 1px solid var(--surface-200);
+}
+
+.resumo-financeiro-rotulo {
+  display: block;
+  color: var(--text-color-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.3rem;
+}
+
+.resumo-financeiro-valor {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--app-navy);
+}
+
+.resumo-financeiro-saldo {
+  background: var(--green-50);
+  border-color: var(--green-200);
+
+  .resumo-financeiro-valor {
+    color: var(--green-700);
+  }
+
+  &.resumo-financeiro-divergente {
+    background: var(--red-50);
+    border-color: var(--red-200);
+
+    .resumo-financeiro-valor {
+      color: var(--red-700);
+    }
+  }
+}
+
+// Card de devolução (ModalidadeComponent, quando a Contabilidade Orçamentária
+// devolve a STC pro solicitante corrigir) — pedido do usuário em 2026-08-20:
+// o p-message padrão (barrinha fina de aviso) passava despercebido demais
+// pra uma informação importante ("por que minha STC voltou"). Card maior,
+// com ícone e o motivo em destaque próprio, não só um texto corrido.
+.devolucao-card {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.1rem 1.25rem;
+  border-radius: 10px;
+  background: var(--yellow-50);
+  border: 1px solid var(--yellow-200);
+  border-left: 5px solid var(--yellow-500);
+}
+
+.devolucao-card-icone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--yellow-100);
+  flex-shrink: 0;
+
+  i {
+    font-size: 1.25rem;
+    color: var(--yellow-700);
+  }
+}
+
+.devolucao-card-conteudo {
+  display: flex;
+  flex-direction: column;
+}
+
+.devolucao-card-titulo {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--yellow-800);
+}
+
+.devolucao-card-motivo-rotulo {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--yellow-700);
+  margin-top: 0.5rem;
+}
+
+.devolucao-card-motivo {
+  margin: 0.2rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+// Sinaliza visualmente qual decisão (Aprovar/Reprovar) foi clicada em
+// AprovacaoComponent — pedido do usuário em 2026-08-22. Anel de contorno ao
+// redor do botão escolhido; no caso do botão negativo (outlined por padrão),
+// também preenche com vermelho sólido pra ficar tão evidente quanto o botão
+// de aprovar (que já é preenchido em azul por padrão). Trocar de decisão
+// clicando no outro botão já funcionava antes — isso só deixa visível qual
+// está selecionada agora. Especificidade de 4 classes no seletão do negar
+// pra vencer `.p-button.p-button-danger.p-button-outlined` do tema (3 classes).
+.p-button.decisao-btn-selecionada {
+  box-shadow: 0 0 0 3px var(--primary-100);
+}
+
+// :enabled:hover/:active do tema (`.p-button.p-button-danger.p-button-outlined:enabled:hover`)
+// têm 5 níveis de especificidade (3 classes + 2 pseudo-classes) — precisa
+// cobrir os três estados explicitamente, senão passar o mouse por cima
+// enquanto selecionado volta a mostrar o preenchimento quase-transparente do
+// hover padrão (`.p-component` a mais aqui só pra igualar a especificidade
+// de 5, a ordem no arquivo desempata a favor deste, já que carrega depois do
+// theme.css — ver angular.json).
+.p-button.p-button-danger.p-button-outlined.p-component.decisao-btn-selecionada-negativa,
+.p-button.p-button-danger.p-button-outlined.p-component.decisao-btn-selecionada-negativa:enabled:hover,
+.p-button.p-button-danger.p-button-outlined.p-component.decisao-btn-selecionada-negativa:enabled:active {
+  background-color: var(--red-500);
+  color: #fff;
+  border: 1px solid var(--red-500);
+  box-shadow: 0 0 0 3px var(--red-100);
+}

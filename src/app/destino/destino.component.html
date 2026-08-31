@@ -1,0 +1,345 @@
+<app-spinner [carregandoDados]="carregando"></app-spinner>
+
+<app-page-header
+  titulo="Nova Solicitação - Por Lote"
+  subtitulo="Defina os dados do destino para cada linha selecionada."
+></app-page-header>
+
+<app-devolucao-banner [motivo]="dadosFormulario.parecerOrcamentaria"></app-devolucao-banner>
+
+<p-card header="Resumo da Origem Selecionada" styleClass="mb-3" *ngIf="loteSelecionado">
+  <div class="grid formgrid">
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Lote</label>
+      <span class="font-bold">{{ loteSelecionado.numLot }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Empresa/Filial</label>
+      <span class="font-bold"
+        >{{ dadosFormulario.codEmp || '-' }} - {{ dadosFormulario.nomEmp || '-' }} /
+        {{ dadosFormulario.codFil || '-' }} - {{ dadosFormulario.nomFil || '-' }}</span
+      >
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Data do Lote</label>
+      <span class="font-bold">{{ loteSelecionado.datLot || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Total Informado do Lote</label>
+      <span class="font-bold">R$ {{ loteSelecionado.totInf | moeda }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Linhas Selecionadas</label>
+      <span class="font-bold">{{ linhasOrigem.length }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Valor Total da Origem</label>
+      <span class="font-bold">R$ {{ valorTotalOrigem | moeda }}</span>
+    </div>
+  </div>
+</p-card>
+
+<p-card header="Modo de Destino">
+  <div class="flex flex-column md:flex-row gap-3 md:gap-5">
+    <div class="flex align-items-center gap-2 cursor-pointer" (click)="selecionarModo('Unico')">
+      <p-radioButton name="modoDestino" value="Unico" [ngModel]="modo"></p-radioButton>
+      <label class="cursor-pointer">Destino Único</label>
+    </div>
+    <div class="flex align-items-center gap-2 cursor-pointer" (click)="selecionarModo('Multiplo')">
+      <p-radioButton name="modoDestino" value="Multiplo" [ngModel]="modo"></p-radioButton>
+      <label class="cursor-pointer">Destino Múltiplo</label>
+    </div>
+  </div>
+</p-card>
+
+<div class="grid mt-3">
+  <div class="col-12 lg:col-8">
+    <p-card header="Destino Único" *ngIf="modo === 'Unico'">
+      <div class="grid formgrid p-fluid" [formGroup]="formUnico">
+        <div class="field col-12 md:col-6">
+          <label for="ctaRed">Conta Contábil Destino *</label>
+          <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
+            inputId="ctaRed"
+            formControlName="ctaRed"
+            [options]="contas"
+            optionValue="ctaRed"
+            filterBy="ctaRed,desCta"
+            placeholder="Selecione a conta"
+            [filter]="true"
+            [showClear]="true"
+            [autoDisplayFirst]="false"
+          >
+            <ng-template let-c pTemplate="item">{{ c.ctaRed }} - {{ c.desCta }}</ng-template>
+            <ng-template let-c pTemplate="selectedItem"
+              >{{ c.ctaRed }} - {{ c.desCta }}</ng-template
+            >
+          </p-dropdown>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="numPrj"
+            >Projeto Destino *
+            <i
+              class="pi pi-spinner pi-spin text-color-secondary"
+              *ngIf="carregandoProjetos(formUnico.get('ctaRed')?.value)"
+            ></i
+          ></label>
+          <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
+            inputId="numPrj"
+            formControlName="numPrj"
+            [disabled]="!projetosCarregados(formUnico.get('ctaRed')?.value)"
+            [options]="projetosDaConta(formUnico.get('ctaRed')?.value)"
+            optionValue="numPrj"
+            filterBy="numPrj,nomPrj"
+            [placeholder]="placeholderProjeto(formUnico.get('ctaRed')?.value)"
+            [filter]="true"
+            [showClear]="true"
+            [autoDisplayFirst]="false"
+          >
+            <ng-template let-p pTemplate="item">{{ p.numPrj }} - {{ p.nomPrj }}</ng-template>
+            <ng-template let-p pTemplate="selectedItem"
+              >{{ p.numPrj }} - {{ p.nomPrj }}</ng-template
+            >
+          </p-dropdown>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="codCcu"
+            >Centro de Custo Destino *
+            <i
+              class="pi pi-spinner pi-spin text-color-secondary"
+              *ngIf="carregandoSegmento(formUnico.get('ctaRed')?.value, formUnico.get('numPrj')?.value)"
+            ></i
+          ></label>
+          <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
+            inputId="codCcu"
+            formControlName="codCcu"
+            [disabled]="!segmentoCarregado(formUnico.get('ctaRed')?.value, formUnico.get('numPrj')?.value)"
+            [options]="centrosCustoDoSegmento(formUnico.get('ctaRed')?.value, formUnico.get('numPrj')?.value)"
+            optionValue="codCcu"
+            filterBy="codCcu,desCcu"
+            [placeholder]="placeholderCC(formUnico.get('ctaRed')?.value, formUnico.get('numPrj')?.value)"
+            [filter]="true"
+            [showClear]="true"
+            [autoDisplayFirst]="false"
+          >
+            <ng-template let-c pTemplate="item">{{ c.codCcu }} - {{ c.desCcu }}</ng-template>
+            <ng-template let-c pTemplate="selectedItem"
+              >{{ c.codCcu }} - {{ c.desCcu }}</ng-template
+            >
+          </p-dropdown>
+          <small class="text-color-secondary">Só aparecem Centros de Custo com gestor cadastrado.</small>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="codFpj"
+            >Fase Destino *
+            <i
+              class="pi pi-spinner pi-spin text-color-secondary"
+              *ngIf="carregandoSegmento(formUnico.get('ctaRed')?.value, formUnico.get('numPrj')?.value)"
+            ></i
+          ></label>
+          <p-dropdown [appendTo]="'body'"
+            inputId="codFpj"
+            formControlName="codFpj"
+            [disabled]="!segmentoCarregado(formUnico.get('ctaRed')?.value, formUnico.get('numPrj')?.value)"
+            [options]="fasesDoSegmento(formUnico.get('ctaRed')?.value, formUnico.get('numPrj')?.value)"
+            optionValue="codFpj"
+            filterBy="codFpj,desFpj"
+            [placeholder]="placeholderFase(formUnico.get('ctaRed')?.value, formUnico.get('numPrj')?.value)"
+            [filter]="true"
+            [showClear]="true"
+            [autoDisplayFirst]="false"
+          >
+            <ng-template let-f pTemplate="item">{{ f.codFpj }} - {{ f.desFpj }}</ng-template>
+            <ng-template let-f pTemplate="selectedItem"
+              >{{ f.codFpj }} - {{ f.desFpj }}</ng-template
+            >
+          </p-dropdown>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label>Natureza Destino (automática)</label>
+          <input type="text" pInputText value="Mesma natureza da origem" disabled />
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label>Gestor do Destino</label>
+          <input
+            type="text"
+            pInputText
+            [value]="gestorSelecionado || 'Selecione o Centro de Custo para identificar'"
+            disabled
+          />
+        </div>
+      </div>
+    </p-card>
+
+    <p-card header="Destino Múltiplo" *ngIf="modo === 'Multiplo'">
+      <p class="text-sm text-color-secondary mt-0 mb-3">
+        Cada rateio pode ir para um destino diferente — inclusive rateios de um mesmo lançamento.
+      </p>
+      <div class="overflow-x-auto">
+      <p-table [value]="linhasDestino" dataKey="lancamento">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Lançamento</th>
+            <th>Conta Destino</th>
+            <th>Projeto Destino</th>
+            <th>Centro de Custo Destino</th>
+            <th>Fase Destino</th>
+            <th>Natureza</th>
+            <th>Valor</th>
+            <th>Aprovador</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-linha>
+          <tr>
+            <td>{{ linha.lancamento }}</td>
+            <td>
+              <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
+                [options]="contas"
+                [ngModel]="linha.ctaRed"
+                (ngModelChange)="aoTrocarContaLinha(linha, $event)"
+                optionValue="ctaRed"
+                filterBy="ctaRed,desCta"
+                [filter]="true"
+                placeholder="Conta"
+                [autoDisplayFirst]="false"
+              >
+                <ng-template let-c pTemplate="item">{{ c.ctaRed }} - {{ c.desCta }}</ng-template>
+                <ng-template let-c pTemplate="selectedItem"
+                  >{{ c.ctaRed }} - {{ c.desCta }}</ng-template
+                >
+              </p-dropdown>
+            </td>
+            <td>
+              <span class="flex align-items-center gap-2">
+                <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
+                  [disabled]="!projetosCarregados(linha.ctaRed)"
+                  [options]="projetosDaConta(linha.ctaRed)"
+                  [ngModel]="linha.numPrj"
+                  (ngModelChange)="aoTrocarProjetoLinha(linha, $event)"
+                  optionValue="numPrj"
+                  filterBy="numPrj,nomPrj"
+                  [filter]="true"
+                  [placeholder]="placeholderProjeto(linha.ctaRed)"
+                  [autoDisplayFirst]="false"
+                >
+                  <ng-template let-p pTemplate="item">{{ p.numPrj }} - {{ p.nomPrj }}</ng-template>
+                  <ng-template let-p pTemplate="selectedItem"
+                    >{{ p.numPrj }} - {{ p.nomPrj }}</ng-template
+                  >
+                </p-dropdown>
+                <i class="pi pi-spinner pi-spin text-color-secondary" *ngIf="carregandoProjetos(linha.ctaRed)"></i>
+              </span>
+            </td>
+            <td>
+              <span class="flex align-items-center gap-2">
+                <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
+                  [disabled]="!segmentoCarregado(linha.ctaRed, linha.numPrj)"
+                  [options]="centrosCustoDoSegmento(linha.ctaRed, linha.numPrj)"
+                  [(ngModel)]="linha.codCcu"
+                  optionValue="codCcu"
+                  filterBy="codCcu,desCcu"
+                  [filter]="true"
+                  [placeholder]="placeholderCC(linha.ctaRed, linha.numPrj)"
+                  [autoDisplayFirst]="false"
+                >
+                  <ng-template let-c pTemplate="item">{{ c.codCcu }} - {{ c.desCcu }}</ng-template>
+                  <ng-template let-c pTemplate="selectedItem"
+                    >{{ c.codCcu }} - {{ c.desCcu }}</ng-template
+                  >
+                </p-dropdown>
+                <i class="pi pi-spinner pi-spin text-color-secondary" *ngIf="carregandoSegmento(linha.ctaRed, linha.numPrj)"></i>
+              </span>
+            </td>
+            <td>
+              <p-dropdown [appendTo]="'body'"
+                [disabled]="!segmentoCarregado(linha.ctaRed, linha.numPrj)"
+                [options]="fasesDoSegmento(linha.ctaRed, linha.numPrj)"
+                [(ngModel)]="linha.codFpj"
+                optionValue="codFpj"
+                filterBy="codFpj,desFpj"
+                [filter]="true"
+                [placeholder]="placeholderFase(linha.ctaRed, linha.numPrj)"
+                [autoDisplayFirst]="false"
+              >
+                <ng-template let-f pTemplate="item">{{ f.codFpj }} - {{ f.desFpj }}</ng-template>
+                <ng-template let-f pTemplate="selectedItem"
+                  >{{ f.codFpj }} - {{ f.desFpj }}</ng-template
+                >
+              </p-dropdown>
+            </td>
+            <td>{{ linha.natureza }}</td>
+            <td>R$ {{ linha.valor | moeda }}</td>
+            <td>{{ gestorDaLinha(linha) || '-' }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+      </div>
+    </p-card>
+  </div>
+
+  <div class="col-12 lg:col-4">
+    <p-card *ngIf="modo === 'Unico'">
+      <ng-template pTemplate="header">
+        <div class="card-header-com-icone">
+          <i class="pi pi-shield"></i>
+          <span>Validação do Segmento Contábil</span>
+        </div>
+      </ng-template>
+      <div class="flex align-items-center justify-content-between mb-2">
+        <span class="text-color-secondary">Status de combinação</span>
+        <span
+          class="badge-status"
+          [ngClass]="segmentoUnicoValido ? 'badge-status-ok' : 'badge-status-pendente'"
+          >{{ segmentoUnicoValido ? 'Válido' : 'Incompleto' }}</span
+        >
+      </div>
+      <p class="text-sm text-color-secondary m-0">
+        A combinação Conta + CC + Projeto + Fase será validada no ERP Senior no momento do
+        processamento.
+      </p>
+    </p-card>
+
+    <p-card header="Resumo do Destino" styleClass="mt-3">
+      <div class="flex justify-content-between py-1 mb-2">
+        <span class="text-color-secondary">Total de linhas</span>
+        <span class="font-bold">{{ linhasOrigem.length }}</span>
+      </div>
+      <div class="resumo-financeiro">
+        <div class="resumo-financeiro-item">
+          <span class="resumo-financeiro-rotulo">Débito Total</span>
+          <span class="resumo-financeiro-valor">R$ {{ debitoTotal | moeda }}</span>
+        </div>
+        <div class="resumo-financeiro-item">
+          <span class="resumo-financeiro-rotulo">Crédito Total</span>
+          <span class="resumo-financeiro-valor">R$ {{ creditoTotal | moeda }}</span>
+        </div>
+        <div
+          class="resumo-financeiro-item resumo-financeiro-saldo"
+          [ngClass]="{ 'resumo-financeiro-divergente': saldo !== 0 }"
+        >
+          <span class="resumo-financeiro-rotulo">Saldo</span>
+          <span class="resumo-financeiro-valor">R$ {{ saldo | moeda }}</span>
+        </div>
+      </div>
+    </p-card>
+  </div>
+</div>
+
+<div class="flex justify-content-between mt-3">
+  <p-button
+    label="Voltar"
+    styleClass="p-button-outlined"
+    icon="pi pi-arrow-left"
+    (click)="voltarEtapa()"
+  ></p-button>
+  <p-button
+    label="Avançar para Resumo"
+    icon="pi pi-arrow-right"
+    iconPos="right"
+    (click)="avancarEtapa()"
+  ></p-button>
+</div>

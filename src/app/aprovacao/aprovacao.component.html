@@ -1,0 +1,268 @@
+<app-page-header [titulo]="titulo" [subtitulo]="subtitulo"></app-page-header>
+<app-spinner [carregandoDados]="carregandoIntegracao"></app-spinner>
+
+<p-dialog
+  header="Erro ao integrar"
+  [(visible)]="mostrarErroIntegracao"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '30rem' }"
+>
+  <p class="m-0">Houve um erro ao tentar integrar.</p>
+  <p class="mt-2 mb-0 font-bold">{{ mensagemErroIntegracao }}</p>
+  <ng-template pTemplate="footer">
+    <p-button label="Fechar" (click)="mostrarErroIntegracao = false"></p-button>
+  </ng-template>
+</p-dialog>
+
+<p-message
+  *ngIf="decisaoRegistrada"
+  [severity]="severidadeDecisao"
+  styleClass="w-full mb-3"
+  [text]="mensagemDecisao"
+></p-message>
+
+<p-card>
+  <ng-template pTemplate="header">
+    <div class="card-header-com-icone">
+      <i class="pi pi-file"></i>
+      <span>Resumo da Solicitação</span>
+    </div>
+  </ng-template>
+  <div class="grid">
+    <div class="col-12 lg:col-8">
+      <div class="grid formgrid">
+        <div class="field col-6 md:col-4">
+          <label class="block text-color-secondary">Número STC</label>
+          <span class="font-bold">{{ dadosFormulario.numeroStc || '-' }}</span>
+        </div>
+        <div class="field col-6 md:col-4">
+          <label class="block text-color-secondary">Modalidade</label>
+          <span class="font-bold">{{ dadosFormulario.tipoTransferencia || '-' }}</span>
+        </div>
+        <div class="field col-6 md:col-4" *ngIf="dadosFormulario.numLote">
+          <label class="block text-color-secondary">Lote</label>
+          <span class="font-bold">{{ dadosFormulario.numLote }}</span>
+        </div>
+        <div class="field col-6 md:col-4">
+          <label class="block text-color-secondary">Empresa/Filial</label>
+          <span class="font-bold"
+            >{{ dadosFormulario.codEmp || '-' }} - {{ dadosFormulario.nomEmp || '-' }} /
+            {{ dadosFormulario.codFil || '-' }} - {{ dadosFormulario.nomFil || '-' }}</span
+          >
+        </div>
+        <div class="field col-6 md:col-4">
+          <label class="block text-color-secondary">Solicitante</label>
+          <span class="font-bold">{{ dadosFormulario.solicitante || '-' }}</span>
+        </div>
+        <div class="field col-6 md:col-4">
+          <label class="block text-color-secondary">Etapa Atual</label>
+          <span class="font-bold">{{ titulo }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 lg:col-4">
+      <div class="resumo-financeiro">
+        <div class="resumo-financeiro-item">
+          <span class="resumo-financeiro-rotulo">Débito Total</span>
+          <span class="resumo-financeiro-valor">R$ {{ debitoTotal | moeda }}</span>
+        </div>
+        <div class="resumo-financeiro-item">
+          <span class="resumo-financeiro-rotulo">Crédito Total</span>
+          <span class="resumo-financeiro-valor">R$ {{ creditoTotal | moeda }}</span>
+        </div>
+        <div
+          class="resumo-financeiro-item resumo-financeiro-saldo"
+          [ngClass]="{ 'resumo-financeiro-divergente': saldo !== 0 }"
+        >
+          <span class="resumo-financeiro-rotulo">Saldo</span>
+          <span class="resumo-financeiro-valor">R$ {{ saldo | moeda }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="block text-color-secondary">Justificativa da Solicitação</label>
+    <p>{{ dadosFormulario.justificativa || '-' }}</p>
+  </div>
+</p-card>
+
+<div class="grid mt-2">
+    <div class="col-12 lg:col-7">
+      <p-card header="Linhas sob sua Responsabilidade">
+        <div class="overflow-x-auto">
+          <p-table
+            [value]="linhasComparativo"
+            dataKey="lancamento"
+            [(selection)]="linhaSelecionada"
+            selectionMode="single"
+            [paginator]="true"
+            [rows]="5"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width: 3rem"></th>
+                <th>Linha</th>
+                <th>Conta Origem</th>
+                <th>Conta Destino</th>
+                <th>Natureza Destino</th>
+                <th>Valor Débito</th>
+                <th>Valor Crédito</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-linha>
+              <tr>
+                <td><p-tableRadioButton [value]="linha"></p-tableRadioButton></td>
+                <td>{{ linha.lancamento }}</td>
+                <td>{{ linha.origem.ctaRed }}</td>
+                <td>{{ linha.destino?.ctaRed }} - {{ linha.destino?.desCta }}</td>
+                <td>{{ linha.destino?.natureza }}</td>
+                <!-- Débito = Crédito = valor da linha (gera 1 rateio Destino
+                + 1 rateio Origem-estorno no ERP, um D um C — ver
+                functions/integracao-erp.ts). -->
+                <td>R$ {{ (linha.destino?.valor || linha.origem.valor) | moeda }}</td>
+                <td>R$ {{ (linha.destino?.valor || linha.origem.valor) | moeda }}</td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="7" class="text-center">
+                  Nenhuma linha disponível para esta solicitação.
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-5">
+      <p-card header="Comparativo Origem x Destino">
+        <p class="text-color-secondary text-sm mt-0 mb-3" *ngIf="linhaSelecionada">
+          Linha selecionada: {{ linhaSelecionada.lancamento }}
+        </p>
+        <div class="overflow-x-auto" *ngIf="linhaSelecionada; else semLinhaSelecionada">
+          <table class="w-full">
+            <tr>
+              <th></th>
+              <th class="text-left text-color-secondary font-normal">Origem</th>
+              <th class="text-left text-color-secondary font-normal">Destino</th>
+            </tr>
+            <tr>
+              <td class="text-color-secondary">Conta Contábil</td>
+              <td>{{ linhaSelecionada.origem.ctaRed || '-' }} {{ linhaSelecionada.origem.desCta }}</td>
+              <td>{{ linhaSelecionada.destino?.ctaRed }} - {{ linhaSelecionada.destino?.desCta }}</td>
+            </tr>
+            <tr>
+              <td class="text-color-secondary">Centro de Custo</td>
+              <td>{{ linhaSelecionada.origem.codCcu || '-' }} {{ linhaSelecionada.origem.desCcu }}</td>
+              <td>{{ linhaSelecionada.destino?.codCcu }} - {{ linhaSelecionada.destino?.desCcu }}</td>
+            </tr>
+            <tr>
+              <td class="text-color-secondary">Natureza</td>
+              <td>{{ linhaSelecionada.origem.natureza || '-' }}</td>
+              <td>{{ linhaSelecionada.destino?.natureza || '-' }}</td>
+            </tr>
+            <tr>
+              <td class="text-color-secondary">Projeto</td>
+              <td>{{ linhaSelecionada.origem.numPrj || '-' }} {{ linhaSelecionada.origem.nomPrj }}</td>
+              <td>{{ linhaSelecionada.destino?.nomPrj || '-' }}</td>
+            </tr>
+            <tr>
+              <td class="text-color-secondary">Fase</td>
+              <td>{{ linhaSelecionada.origem.codFpj || '-' }} {{ linhaSelecionada.origem.desFpj }}</td>
+              <td>{{ linhaSelecionada.destino?.desFpj || '-' }}</td>
+            </tr>
+            <tr>
+              <td class="text-color-secondary">Valor</td>
+              <td colspan="2">
+                R$
+                {{ (linhaSelecionada.destino?.valor || linhaSelecionada.origem.valor) | moeda }}
+              </td>
+            </tr>
+            <tr>
+              <td class="text-color-secondary">Histórico</td>
+              <td colspan="2">
+                {{ linhaSelecionada.destino?.historico || linhaSelecionada.origem.historico || '-' }}
+              </td>
+            </tr>
+            <tr>
+              <td class="text-color-secondary">Solicitante</td>
+              <td colspan="2">{{ dadosFormulario.solicitante || '-' }}</td>
+            </tr>
+          </table>
+        </div>
+        <ng-template #semLinhaSelecionada>
+          <p class="text-color-secondary">
+            Selecione uma linha na tabela ao lado para ver o comparativo.
+          </p>
+        </ng-template>
+      </p-card>
+    </div>
+  </div>
+
+  <p-card header="Checklist de Liberação" styleClass="mb-3 mt-3" *ngIf="mostrarChecklist">
+    <ul class="m-0 pl-3">
+      <li>Aprovação CAPEX/OPEX concluída</li>
+      <li>Gestores de origem aprovaram</li>
+      <li>Gestores de destino aprovaram</li>
+      <li>Segmentos contábeis preenchidos em todas as linhas</li>
+    </ul>
+    <p class="text-sm text-color-secondary mt-3 mb-0">
+      Esta STC já passou pelas etapas anteriores do fluxo (orçamentária, gestor de origem e
+      gestor de destino) para chegar até aqui — não há checagem automática contra um histórico
+      de aprovações ainda, já que essa auditoria completa não está implementada.
+    </p>
+  </p-card>
+
+  <div class="grid mt-3" *ngIf="!somenteIntegrar">
+    <div class="col-12">
+      <div class="field">
+        <label for="parecer">Parecer</label>
+        <textarea
+          id="parecer"
+          pInputTextarea
+          [(ngModel)]="parecer"
+          (ngModelChange)="onParecerAlterado()"
+          [ngClass]="{ 'ng-invalid ng-dirty': parecerInvalido }"
+          rows="3"
+          class="w-full"
+          placeholder="Obrigatório apenas ao registrar decisão negativa"
+        ></textarea>
+        <small class="p-error block" *ngIf="parecerInvalido">
+          Informe um parecer antes de reprovar/devolver — é obrigatório para registrar uma
+          decisão negativa.
+        </small>
+        <small class="text-color-secondary" *ngIf="!parecerInvalido && voltaParaSolicitante">
+          Se não aprovar, a STC volta para o solicitante corrigir com este parecer.
+        </small>
+        <small class="text-color-secondary" *ngIf="!parecerInvalido && !voltaParaSolicitante">
+          Se não aprovar, a STC é encerrada — não há devolução para correção nesta etapa.
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex flex-column align-items-end gap-2 mt-3">
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        *ngIf="!somenteIntegrar"
+        [label]="labelNegativo"
+        [styleClass]="styleClassNegar"
+        icon="pi pi-times"
+        (click)="negar()"
+      ></p-button>
+      <p-button
+        [label]="labelAprovar"
+        icon="pi pi-check"
+        [styleClass]="styleClassAprovar"
+        [disabled]="carregandoIntegracao"
+        (click)="aprovar()"
+      ></p-button>
+    </div>
+    <small class="text-color-secondary" *ngIf="decisaoRegistrada && !somenteIntegrar">
+      Clicou errado? É só clicar no outro botão pra trocar a decisão antes de enviar pelo BPM.
+    </small>
+  </div>

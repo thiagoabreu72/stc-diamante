@@ -1,0 +1,124 @@
+<app-page-header
+  [titulo]="dadosFormulario.tipoTransferencia === 'Manual' ? 'Nova Solicitação - Manual' : 'Nova Solicitação - Por Lote'"
+  subtitulo="Revise os dados abaixo antes de enviar a solicitação."
+></app-page-header>
+
+<app-devolucao-banner [motivo]="dadosFormulario.parecerOrcamentaria"></app-devolucao-banner>
+
+<p-card header="Resumo da Solicitação">
+  <div class="grid formgrid">
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Número STC</label>
+      <span class="font-bold">{{ dadosFormulario.numeroStc || 'Gerado ao enviar' }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Modalidade</label>
+      <span class="font-bold">{{ dadosFormulario.tipoTransferencia || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Empresa</label>
+      <span class="font-bold"
+        >{{ dadosFormulario.codEmp }} - {{ dadosFormulario.nomEmp }}</span
+      >
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Filial</label>
+      <span class="font-bold"
+        >{{ dadosFormulario.codFil }} - {{ dadosFormulario.nomFil }}</span
+      >
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Lote</label>
+      <span class="font-bold">{{ dadosFormulario.numLote || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Modo de Destino</label>
+      <span class="font-bold">{{ dadosFormulario.modoDestino || '-' }}</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="block text-color-secondary">Justificativa da Solicitação</label>
+    <p>{{ dadosFormulario.justificativa || '-' }}</p>
+  </div>
+</p-card>
+
+<p-card header="Linhas — Origem x Destino" styleClass="mt-3">
+  <div class="overflow-x-auto">
+    <p-table [value]="linhasComparativo" dataKey="lancamento" [paginator]="true" [rows]="10">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Lançamento</th>
+          <th>Conta Origem</th>
+          <th>Natureza Origem</th>
+          <th>Conta Destino</th>
+          <th>Natureza Destino</th>
+          <th>Valor Débito</th>
+          <th>Valor Crédito</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-linha>
+        <tr>
+          <td>{{ linha.lancamento }}</td>
+          <td>{{ linha.origem.ctaRed }}</td>
+          <td>{{ linha.origem.natureza }}</td>
+          <td>{{ linha.destino?.ctaRed }} - {{ linha.destino?.desCta }}</td>
+          <td>{{ linha.destino?.natureza }}</td>
+          <!-- Débito = Crédito = valor da linha em cada linha (gera 1 rateio
+          Destino + 1 rateio Origem-estorno no ERP, um D um C, mesmo valor —
+          ver functions/integracao-erp.ts). Confirmado pelo usuário em
+          2026-08-31: mostra as duas colunas com o mesmo valor. -->
+          <td>R$ {{ (linha.destino?.valor || linha.origem.valor) | moeda }}</td>
+          <td>R$ {{ (linha.destino?.valor || linha.origem.valor) | moeda }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <div class="resumo-financeiro mt-3 justify-content-end">
+    <div class="resumo-financeiro-item">
+      <span class="resumo-financeiro-rotulo">Débito Total</span>
+      <span class="resumo-financeiro-valor">R$ {{ debitoTotal | moeda }}</span>
+    </div>
+    <div class="resumo-financeiro-item">
+      <span class="resumo-financeiro-rotulo">Crédito Total</span>
+      <span class="resumo-financeiro-valor">R$ {{ creditoTotal | moeda }}</span>
+    </div>
+    <div
+      class="resumo-financeiro-item resumo-financeiro-saldo"
+      [ngClass]="{ 'resumo-financeiro-divergente': saldo !== 0 }"
+    >
+      <span class="resumo-financeiro-rotulo">Saldo</span>
+      <span class="resumo-financeiro-valor">R$ {{ saldo | moeda }}</span>
+    </div>
+  </div>
+</p-card>
+
+<p-message
+  *ngIf="saldo !== 0"
+  severity="warn"
+  styleClass="w-full mt-3"
+  text="O saldo entre débito e crédito não está zerado. Confira as linhas antes de enviar."
+></p-message>
+
+<p-message
+  *ngIf="enviado"
+  severity="success"
+  styleClass="w-full mt-3"
+  text="Solicitação preparada. Confirme o envio pelo botão do BPM."
+></p-message>
+
+<div class="flex justify-content-between mt-3">
+  <p-button
+    label="Voltar"
+    styleClass="p-button-outlined"
+    icon="pi pi-arrow-left"
+    (click)="voltarEtapa()"
+  ></p-button>
+  <p-button
+    label="Enviar Solicitação"
+    icon="pi pi-send"
+    iconPos="right"
+    (click)="enviarSolicitacao()"
+  ></p-button>
+</div>

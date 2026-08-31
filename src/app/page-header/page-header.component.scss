@@ -1,0 +1,16 @@
+:host {
+  display: block;
+  margin-bottom: 1.25rem;
+}
+
+.page-header-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--app-navy);
+}
+
+.page-header-subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--text-color-secondary);
+}

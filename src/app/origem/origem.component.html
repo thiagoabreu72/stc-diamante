@@ -1,0 +1,193 @@
+<app-spinner [carregandoDados]="carregando"></app-spinner>
+
+<app-page-header
+  titulo="Nova Solicitação - Por Lote"
+  subtitulo="Defina a origem dos dados contábeis que serão transferidos."
+></app-page-header>
+
+<app-devolucao-banner [motivo]="dadosFormulario.parecerOrcamentaria"></app-devolucao-banner>
+
+<p-card header="Resumo do Lote Selecionado" styleClass="mb-3" *ngIf="loteSelecionado">
+  <div class="grid formgrid">
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Lote</label>
+      <span class="font-bold"
+        >{{ loteSelecionado.numLot }}<ng-container *ngIf="loteSelecionado.desLot">
+          - {{ loteSelecionado.desLot }}</ng-container
+        ></span
+      >
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Empresa/Filial</label>
+      <span class="font-bold"
+        >{{ dadosFormulario.codEmp || '-' }} - {{ dadosFormulario.nomEmp || '-' }} /
+        {{ dadosFormulario.codFil || '-' }} - {{ dadosFormulario.nomFil || '-' }}</span
+      >
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Data do Lote</label>
+      <span class="font-bold">{{ loteSelecionado.datLot || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Total Débito</label>
+      <span class="font-bold">R$ {{ loteSelecionado.totDeb | moeda }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Total Crédito</label>
+      <span class="font-bold">R$ {{ loteSelecionado.totCre | moeda }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Total de Lançamentos</label>
+      <span class="font-bold">{{ totalLancamentos }}</span>
+    </div>
+  </div>
+</p-card>
+
+<p-message
+  severity="info"
+  styleClass="w-full mb-3"
+  text="Selecione quais lançamentos entram na solicitação. Clique na seta para ver o(s) rateio(s) de cada lançamento — o destino é definido por lançamento, não por rateio individual."
+></p-message>
+
+<p-card header="Lançamentos da Origem">
+  <div class="overflow-x-auto">
+    <p-table
+      [value]="lancamentos"
+      dataKey="numLct"
+      [expandedRowKeys]="expandedRows"
+      [paginator]="true"
+      [rows]="10"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 3rem"></th>
+          <th style="width: 3rem"></th>
+          <th>Lançamento</th>
+          <th>Origem</th>
+          <th>Data</th>
+          <th>Conta Débito</th>
+          <th>Conta Crédito</th>
+          <th>Valor do Lançamento</th>
+          <th>Histórico</th>
+          <th>Status</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-lct>
+        <tr>
+          <td>
+            <p-checkbox
+              [binary]="true"
+              [ngModel]="todosRateiosSelecionados(lct)"
+              (onChange)="selecionarTodosRateios(lct, $event.checked)"
+              [disabled]="!lancamentoTemRateioSelecionavel(lct)"
+            ></p-checkbox>
+          </td>
+          <td>
+            <button
+              type="button"
+              pButton
+              [pRowToggler]="lct"
+              class="p-button-text p-button-rounded p-button-plain"
+              [icon]="expandedRows[lct.numLct] ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+            ></button>
+          </td>
+          <td>{{ lct.numLct }}</td>
+          <td>{{ lct.oriLct }}</td>
+          <td>{{ lct.datLct }}</td>
+          <td>{{ lct.ctaDeb }}</td>
+          <td>{{ lct.ctaCre }}</td>
+          <td>R$ {{ lct.vlrLct | moeda }}</td>
+          <td>{{ lct.cplLct }}</td>
+          <td>
+            <span
+              class="badge-status-lg"
+              [ngClass]="todosRateiosSelecionados(lct) ? 'badge-status-ok' : 'badge-status-pendente'"
+              >{{ todosRateiosSelecionados(lct) ? 'Selecionado' : 'Não selecionado' }}</span
+            >
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="rowexpansion" let-lct>
+        <tr>
+          <td [attr.colspan]="10" class="lancamento-linha-rateios">
+            <span class="text-color-secondary text-sm mb-2 block"
+              >Rateios do lançamento {{ lct.numLct }} (só informativo — a seleção é do lançamento
+              inteiro, no checkbox da linha acima)</span
+            >
+            <p-table [value]="lct.rateios" styleClass="p-table-sm">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th>Conta Contábil</th>
+                  <th>Centro de Custo</th>
+                  <th>Projeto</th>
+                  <th>Fase</th>
+                  <th>Natureza</th>
+                  <th>Valor</th>
+                  <th>Gestor da Origem</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-rateio>
+                <tr [class.linha-sem-gestor]="rateioSemGestor(rateio)">
+                  <td>{{ rateio.ctaRed }}</td>
+                  <td>{{ rateio.codCcu }}</td>
+                  <td>{{ rateio.numPrj || '-' }}</td>
+                  <td>{{ rateio.codFpj || '-' }}</td>
+                  <td>{{ natureza(rateio) }}</td>
+                  <td>R$ {{ rateio.vlrRat | moeda }}</td>
+                  <td>
+                    <span *ngIf="!rateioSemGestor(rateio)">{{ resolverGestor(rateio.codCcu) }}</span>
+                    <span *ngIf="rateioSemGestor(rateio)" class="text-red-600">
+                      <i class="pi pi-exclamation-triangle"></i> Sem gestor cadastrado
+                    </span>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="10" class="text-center">Nenhum lançamento encontrado para o lote selecionado.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</p-card>
+
+<div class="grid mt-3">
+  <div class="col-12 md:col-6">
+    <div class="surface-card border-round p-3 flex align-items-center gap-3 h-full">
+      <i class="pi pi-check-circle text-blue-500 text-2xl"></i>
+      <div>
+        <div class="text-color-secondary text-sm">Lançamentos selecionados</div>
+        <div class="font-bold">{{ totalLancamentosSelecionados }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 md:col-6">
+    <div class="surface-card border-round p-3 flex align-items-center gap-3 h-full">
+      <i class="pi pi-dollar text-blue-500 text-2xl"></i>
+      <div>
+        <div class="text-color-secondary text-sm">Total dos valores selecionados</div>
+        <div class="font-bold">R$ {{ valorTotalSelecionado | moeda }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flex justify-content-between mt-3">
+  <p-button
+    label="Voltar"
+    styleClass="p-button-outlined"
+    icon="pi pi-arrow-left"
+    (click)="voltarEtapa()"
+  ></p-button>
+  <p-button
+    label="Avançar para Destino"
+    icon="pi pi-arrow-right"
+    iconPos="right"
+    (click)="avancarEtapa()"
+    [disabled]="totalRateiosSelecionados === 0"
+  ></p-button>
+</div>

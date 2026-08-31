@@ -1,0 +1,162 @@
+<app-spinner [carregandoDados]="carregando"></app-spinner>
+
+<app-page-header
+  titulo="Nova Solicitação - Escolha da Modalidade"
+  subtitulo="Informe os dados básicos da solicitação e escolha a modalidade de transferência."
+></app-page-header>
+
+<app-devolucao-banner [motivo]="dadosFormulario.parecerOrcamentaria"></app-devolucao-banner>
+
+<p-card header="Dados da Solicitação">
+  <div class="grid formgrid p-fluid">
+    <div class="field col-12 md:col-3">
+      <label>Número da STC</label>
+      <input
+        type="text"
+        pInputText
+        [value]="dadosFormulario.numeroStc || 'Gerado ao salvar'"
+        disabled
+      />
+    </div>
+    <div class="field col-12 md:col-3">
+      <label>Solicitante</label>
+      <input type="text" pInputText [value]="dadosFormulario.solicitante || ''" disabled />
+    </div>
+    <div class="field col-12 md:col-3">
+      <label>Área do Solicitante</label>
+      <input type="text" pInputText [value]="dadosFormulario.areaSolicitante || ''" disabled />
+    </div>
+    <div class="field col-12 md:col-3">
+      <label>Data/Hora de Abertura</label>
+      <input type="text" pInputText [value]="dadosFormulario.dataAbertura || ''" disabled />
+    </div>
+  </div>
+
+  <div class="grid formgrid p-fluid" [formGroup]="form">
+    <div class="field col-12 md:col-6">
+      <label for="codEmp">Empresa *</label>
+      <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
+        inputId="codEmp"
+        formControlName="codEmp"
+        [options]="empresas"
+        optionValue="codEmp"
+        filterBy="codEmp,nomEmp"
+        [placeholder]="carregandoEmpresas ? 'Carregando empresas...' : 'Selecione a empresa'"
+        [filter]="true"
+        [showClear]="true"
+        [autoDisplayFirst]="false"
+      >
+        <ng-template let-empresa pTemplate="item"
+          >{{ empresa.codEmp }} - {{ empresa.nomEmp }}</ng-template
+        >
+        <ng-template let-empresa pTemplate="selectedItem"
+          >{{ empresa.codEmp }} - {{ empresa.nomEmp }}</ng-template
+        >
+      </p-dropdown>
+      <small
+        class="p-error"
+        *ngIf="form.get('codEmp')?.invalid && form.get('codEmp')?.touched"
+      >
+        Campo obrigatório.
+      </small>
+    </div>
+
+    <div class="field col-12 md:col-6">
+      <label for="codFil">Filial *</label>
+      <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
+        inputId="codFil"
+        formControlName="codFil"
+        [options]="filiaisDaEmpresa"
+        optionValue="codFil"
+        filterBy="codFil,nomFil"
+        [placeholder]="placeholderFilial"
+        [filter]="true"
+        [showClear]="true"
+        [autoDisplayFirst]="false"
+      >
+        <ng-template let-filial pTemplate="item"
+          >{{ filial.codFil }} - {{ filial.nomFil }}</ng-template
+        >
+        <ng-template let-filial pTemplate="selectedItem"
+          >{{ filial.codFil }} - {{ filial.nomFil }}</ng-template
+        >
+      </p-dropdown>
+      <small
+        class="p-error"
+        *ngIf="form.get('codFil')?.invalid && form.get('codFil')?.touched"
+      >
+        Campo obrigatório.
+      </small>
+    </div>
+
+    <div class="field col-12">
+      <label for="justificativa"
+        >Justificativa da Solicitação
+        {{ form.get('tipoTransferencia')?.value === 'Manual' ? '*' : '' }}</label
+      >
+      <textarea
+        id="justificativa"
+        pInputTextarea
+        formControlName="justificativa"
+        rows="3"
+        placeholder="Descreva o motivo da solicitação"
+      ></textarea>
+      <small
+        class="p-error"
+        *ngIf="form.get('justificativa')?.invalid && form.get('justificativa')?.touched"
+      >
+        Justificativa obrigatória para a modalidade Manual.
+      </small>
+    </div>
+  </div>
+</p-card>
+
+<p-card header="Tipo de Transferência" styleClass="mt-3">
+  <div class="grid">
+    <div class="col-12 md:col-6">
+      <div
+        class="p-3 border-round cursor-pointer surface-card"
+        [ngClass]="
+          form.get('tipoTransferencia')?.value === 'Por Lote' ? 'border-blue-500' : 'border-300'
+        "
+        style="border-width: 2px; border-style: solid"
+        (click)="selecionarTipo('Por Lote')"
+      >
+        <div class="flex justify-content-between align-items-center">
+          <span class="font-bold">Por Lote</span>
+          <span class="badge-outline-info">Recomendado</span>
+        </div>
+        <p class="text-sm text-color-secondary m-0 mt-2">
+          Origem consultada e selecionada a partir de lotes/lançamentos já existentes no
+          ERP Senior. Dados de origem sempre somente-leitura.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-12 md:col-6">
+      <div
+        class="p-3 border-round cursor-pointer surface-card"
+        [ngClass]="
+          form.get('tipoTransferencia')?.value === 'Manual' ? 'border-blue-500' : 'border-300'
+        "
+        style="border-width: 2px; border-style: solid"
+        (click)="selecionarTipo('Manual')"
+      >
+        <span class="font-bold">Manual</span>
+        <p class="text-sm text-color-secondary m-0 mt-2">
+          Usar apenas quando não houver lote/lançamento elegível, ou mediante exceção
+          formalmente autorizada. Exige justificativa e evidências.
+        </p>
+      </div>
+    </div>
+  </div>
+</p-card>
+
+<div class="flex justify-content-end gap-2 mt-3">
+  <p-button
+    label="Avançar"
+    icon="pi pi-arrow-right"
+    iconPos="right"
+    (click)="avancar()"
+  ></p-button>
+</div>

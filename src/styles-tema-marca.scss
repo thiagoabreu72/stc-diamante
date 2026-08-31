@@ -1,0 +1,975 @@
+// Recolorização do tema PrimeNG lara-light-blue pra bater com a marca da
+// Diamante Energia — gerado em 2026-08-20 a partir de mockups reais do
+// cliente (Google Drive, pasta stc-diamante, "Aprovação do gestor.png"),
+// usando amostragem de pixel pra achar a cor exata do botão "Aprovar"
+// (#0146FD) e das variações de hover/pressed/highlight que o PrimeNG deriva
+// dela.
+//
+// Por quê um arquivo à parte em vez de só mudar `--primary-color` no
+// `:root`: o `theme.css` do lara-light-blue (baixado pré-compilado, sem
+// fonte SASS no pacote) grava a cor primária em HEX FIXO dentro de cada
+// regra (`.p-button { background: #3B82F6 }`), não via `var(--primary-color)`
+// — só ~15 componentes novos (surface/text) usam CSS custom properties de
+// verdade. Sobrescrever só a variável não muda nada visualmente nos
+// componentes que о projeto realmente usa (p-button, p-steps, p-checkbox,
+// p-radiobutton, p-dropdown, p-tag, p-badge etc.).
+//
+// Como foi gerado: script que varre `node_modules/primeng/resources/themes/
+// lara-light-blue/theme.css`, extrai toda regra `seletor { corpo }` cujo
+// corpo contenha um dos 4 tons de azul do tema (#3B82F6 base, #2563EB hover,
+// #1D4ED8 active/pressed, #EFF6FF fundo claro de highlight) e reemite o
+// MESMO seletor com esses 4 tons trocados pelos equivalentes da marca
+// (#0146FD/#013BD4/#012EA6/#EAF0FF) — o resto de cada regra (padding,
+// border-radius, transições) é copiado sem alteração. Como usa o mesmo
+// seletor, a especificidade é idêntica à do tema original; ganha só por
+// vir depois no arquivo (este @import roda depois do theme.css no
+// angular.json). Se atualizar o PrimeNG/trocar de tema, regerar este
+// arquivo (o script não ficou versionado, mas o método está descrito aqui).
+:root {
+  --surface-a: #ffffff;
+  --surface-b: #f8f9fa;
+  --surface-c: #e9ecef;
+  --surface-d: #dee2e6;
+  --surface-e: #ffffff;
+  --surface-f: #ffffff;
+  // Rótulos e texto secundário (labels de campo, legendas, texto de tabela) —
+  // pedido explícito do usuário em 2026-08-20 pra ir além do mockup literal
+  // (que mantém rótulo cinza neutro): tingir também esse texto de azul da
+  // marca, não só título/botão/ícone. Slate-blue em vez do azul vívido do
+  // botão (--primary-color) porque esse aqui aparece em volume grande (todo
+  // rótulo de campo do app) — um azul saturado nessa quantidade cansa a
+  // leitura; a ideia é ficar claramente "azulado", não virar botão.
+  --text-color: #33415c;
+  --text-color-secondary: #5d6b85;
+  --primary-color: #0146fd;
+  --primary-color-text: #ffffff;
+  --font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif,
+    Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+  --surface-0: #ffffff;
+  --surface-50: #fafafa;
+  --surface-100: #f5f5f5;
+  --surface-200: #eeeeee;
+  --surface-300: #e0e0e0;
+  --surface-400: #bdbdbd;
+  // 500-900 mantidos como tons "cinza puro" só onde servem de fundo/borda;
+  // onde o tema usa esses tons pra TEXTO (ícones desabilitados, texto de
+  // tabela em alguns componentes) o efeito também sai levemente azulado por
+  // causa do --text-color acima, que a maioria dos componentes usa de
+  // preferência a --surface-900 puro.
+  --surface-500: #78859e;
+  --surface-600: #5d6b85;
+  --surface-700: #4b5870;
+  --surface-800: #333e54;
+  --surface-900: #1c2438;
+  --gray-50: #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-200: #eeeeee;
+  --gray-300: #e0e0e0;
+  --gray-400: #bdbdbd;
+  --gray-500: #78859e;
+  --gray-600: #5d6b85;
+  --gray-700: #4b5870;
+  --gray-800: #333e54;
+  --gray-900: #1c2438;
+  --content-padding: 1.25rem;
+  --inline-spacing: 0.5rem;
+  --border-radius: 6px;
+  --surface-ground: #eff3f8;
+  --surface-section: #ffffff;
+  --surface-card: #ffffff;
+  --surface-overlay: #ffffff;
+  --surface-border: #dfe7ef;
+  --surface-hover: #f6f9fc;
+  --focus-ring: 0 0 0 0.2rem #bfdbfe;
+  --maskbg: rgba(0, 0, 0, 0.4);
+  color-scheme: light;
+
+  // Não é variável do tema PrimeNG — nome nosso, usado pelos títulos
+  // (page-header, header de p-card) pra bater com o navy dos mockups, em
+  // vez do cinza/preto padrão do tema.
+  --app-navy: #0b1b4a;
+}
+:root {
+  --blue-50: #f5f9ff;
+  --blue-100: #d0e1fd;
+  --blue-200: #abc9fb;
+  --blue-300: #85b2f9;
+  --blue-400: #609af8;
+  --blue-500: #0146fd;
+  --blue-600: #326fd1;
+  --blue-700: #295bac;
+  --blue-800: #204887;
+  --blue-900: #183462;
+  --green-50: #f4fcf7;
+  --green-100: #caf1d8;
+  --green-200: #a0e6ba;
+  --green-300: #76db9b;
+  --green-400: #4cd07d;
+  --green-500: #22c55e;
+  --green-600: #1da750;
+  --green-700: #188a42;
+  --green-800: #136c34;
+  --green-900: #0e4f26;
+  --yellow-50: #fefbf3;
+  --yellow-100: #faedc4;
+  --yellow-200: #f6de95;
+  --yellow-300: #f2d066;
+  --yellow-400: #eec137;
+  --yellow-500: #eab308;
+  --yellow-600: #c79807;
+  --yellow-700: #a47d06;
+  --yellow-800: #816204;
+  --yellow-900: #5e4803;
+  --cyan-50: #f3fbfd;
+  --cyan-100: #c3edf5;
+  --cyan-200: #94e0ed;
+  --cyan-300: #65d2e4;
+  --cyan-400: #35c4dc;
+  --cyan-500: #06b6d4;
+  --cyan-600: #059bb4;
+  --cyan-700: #047f94;
+  --cyan-800: #036475;
+  --cyan-900: #024955;
+  --pink-50: #fef6fa;
+  --pink-100: #fad3e7;
+  --pink-200: #f7b0d3;
+  --pink-300: #f38ec0;
+  --pink-400: #f06bac;
+  --pink-500: #ec4899;
+  --pink-600: #c93d82;
+  --pink-700: #a5326b;
+  --pink-800: #822854;
+  --pink-900: #5e1d3d;
+  --indigo-50: #f7f7fe;
+  --indigo-100: #dadafc;
+  --indigo-200: #bcbdf9;
+  --indigo-300: #9ea0f6;
+  --indigo-400: #8183f4;
+  --indigo-500: #6366f1;
+  --indigo-600: #5457cd;
+  --indigo-700: #4547a9;
+  --indigo-800: #363885;
+  --indigo-900: #282960;
+  --teal-50: #f3fbfb;
+  --teal-100: #c7eeea;
+  --teal-200: #9ae0d9;
+  --teal-300: #6dd3c8;
+  --teal-400: #41c5b7;
+  --teal-500: #14b8a6;
+  --teal-600: #119c8d;
+  --teal-700: #0e8174;
+  --teal-800: #0b655b;
+  --teal-900: #084a42;
+  --orange-50: #fff8f3;
+  --orange-100: #feddc7;
+  --orange-200: #fcc39b;
+  --orange-300: #fba86f;
+  --orange-400: #fa8e42;
+  --orange-500: #f97316;
+  --orange-600: #d46213;
+  --orange-700: #ae510f;
+  --orange-800: #893f0c;
+  --orange-900: #642e09;
+  --bluegray-50: #f7f8f9;
+  --bluegray-100: #dadee3;
+  --bluegray-200: #bcc3cd;
+  --bluegray-300: #9fa9b7;
+  --bluegray-400: #818ea1;
+  --bluegray-500: #64748b;
+  --bluegray-600: #556376;
+  --bluegray-700: #465161;
+  --bluegray-800: #37404c;
+  --bluegray-900: #282e38;
+  --purple-50: #fbf7ff;
+  --purple-100: #ead6fd;
+  --purple-200: #dab6fc;
+  --purple-300: #c996fa;
+  --purple-400: #b975f9;
+  --purple-500: #a855f7;
+  --purple-600: #8f48d2;
+  --purple-700: #763cad;
+  --purple-800: #5c2f88;
+  --purple-900: #432263;
+  --red-50: #fff5f5;
+  --red-100: #ffd0ce;
+  --red-200: #ffaca7;
+  --red-300: #ff8780;
+  --red-400: #ff6259;
+  --red-500: #ff3d32;
+  --red-600: #d9342b;
+  --red-700: #b32b23;
+  --red-800: #8c221c;
+  --red-900: #661814;
+  --primary-50: #f5f9ff;
+  --primary-100: #d0e1fd;
+  --primary-200: #abc9fb;
+  --primary-300: #85b2f9;
+  --primary-400: #609af8;
+  --primary-500: #0146fd;
+  --primary-600: #326fd1;
+  --primary-700: #295bac;
+  --primary-800: #204887;
+  --primary-900: #183462;
+}
+.p-autocomplete .p-autocomplete-multiple-container:not(.p-disabled):hover {
+  border-color: #0146fd;
+}
+.p-autocomplete .p-autocomplete-multiple-container:not(.p-disabled).p-focus {
+  outline: 0 none;
+  outline-offset: 0;
+  box-shadow: 0 0 0 0.2rem #bfdbfe;
+  border-color: #0146fd;
+}
+.p-autocomplete .p-autocomplete-multiple-container .p-autocomplete-token {
+  padding: 0.375rem 0.75rem;
+  background: #eaf0ff;
+  color: #012ea6;
+  border-radius: 6px;
+}
+.p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-datepicker .p-datepicker-header .p-datepicker-title .p-datepicker-year:enabled:hover,
+.p-datepicker .p-datepicker-header .p-datepicker-title .p-datepicker-month:enabled:hover {
+  color: #0146fd;
+}
+.p-datepicker table td > span.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-datepicker table td.p-datepicker-today > span.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-datepicker .p-monthpicker .p-monthpicker-month.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-datepicker .p-yearpicker .p-yearpicker-year.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-cascadeselect:not(.p-disabled):hover {
+  border-color: #0146fd;
+}
+.p-cascadeselect:not(.p-disabled).p-focus {
+  outline: 0 none;
+  outline-offset: 0;
+  box-shadow: 0 0 0 0.2rem #bfdbfe;
+  border-color: #0146fd;
+}
+.p-cascadeselect-panel .p-cascadeselect-items .p-cascadeselect-item.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-checkbox .p-checkbox-box.p-highlight {
+  border-color: #0146fd;
+  background: #0146fd;
+}
+.p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box:hover {
+  border-color: #0146fd;
+}
+.p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box.p-focus {
+  outline: 0 none;
+  outline-offset: 0;
+  box-shadow: 0 0 0 0.2rem #bfdbfe;
+  border-color: #0146fd;
+}
+.p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box.p-highlight:hover {
+  border-color: #012ea6;
+  background: #012ea6;
+  color: #ffffff;
+}
+.p-input-filled .p-checkbox .p-checkbox-box.p-highlight {
+  background: #0146fd;
+}
+.p-input-filled .p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box.p-highlight:hover {
+  background: #012ea6;
+}
+.p-chips .p-chips-multiple-container:not(.p-disabled):hover {
+  border-color: #0146fd;
+}
+.p-chips .p-chips-multiple-container:not(.p-disabled).p-focus {
+  outline: 0 none;
+  outline-offset: 0;
+  box-shadow: 0 0 0 0.2rem #bfdbfe;
+  border-color: #0146fd;
+}
+.p-chips .p-chips-multiple-container .p-chips-token {
+  padding: 0.375rem 0.75rem;
+  background: #eaf0ff;
+  color: #012ea6;
+  border-radius: 6px;
+}
+.p-dropdown:not(.p-disabled):hover {
+  border-color: #0146fd;
+}
+.p-dropdown:not(.p-disabled).p-focus {
+  outline: 0 none;
+  outline-offset: 0;
+  box-shadow: 0 0 0 0.2rem #bfdbfe;
+  border-color: #0146fd;
+}
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-editor-container .ql-snow.ql-toolbar button.ql-active,
+.p-editor-container .ql-snow.ql-toolbar .ql-picker-label.ql-active,
+.p-editor-container .ql-snow.ql-toolbar .ql-picker-item.ql-selected {
+  color: #0146fd;
+}
+.p-editor-container .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.p-editor-container .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke,
+.p-editor-container .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-stroke {
+  stroke: #0146fd;
+}
+.p-editor-container .ql-snow.ql-toolbar button.ql-active .ql-fill,
+.p-editor-container .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-fill,
+.p-editor-container .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-fill {
+  fill: #0146fd;
+}
+.p-editor-container .ql-snow.ql-toolbar button.ql-active .ql-picker-label,
+.p-editor-container .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-picker-label,
+.p-editor-container .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-picker-label {
+  color: #0146fd;
+}
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
+  background: #0146fd;
+}
+.p-inputswitch.p-inputswitch-checked:not(.p-disabled):hover .p-inputswitch-slider {
+  background: #013bd4;
+}
+.p-inputtext:enabled:hover {
+  border-color: #0146fd;
+}
+.p-inputtext:enabled:focus {
+  outline: 0 none;
+  outline-offset: 0;
+  box-shadow: 0 0 0 0.2rem #bfdbfe;
+  border-color: #0146fd;
+}
+.p-listbox .p-listbox-list .p-listbox-item.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-multiselect:not(.p-disabled):hover {
+  border-color: #0146fd;
+}
+.p-multiselect:not(.p-disabled).p-focus {
+  outline: 0 none;
+  outline-offset: 0;
+  box-shadow: 0 0 0 0.2rem #bfdbfe;
+  border-color: #0146fd;
+}
+.p-multiselect.p-multiselect-chip .p-multiselect-token {
+  padding: 0.375rem 0.75rem;
+  background: #eaf0ff;
+  color: #012ea6;
+  border-radius: 6px;
+}
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-radiobutton .p-radiobutton-box:not(.p-disabled):not(.p-highlight):hover {
+  border-color: #0146fd;
+}
+.p-radiobutton .p-radiobutton-box:not(.p-disabled).p-focus {
+  outline: 0 none;
+  outline-offset: 0;
+  box-shadow: 0 0 0 0.2rem #bfdbfe;
+  border-color: #0146fd;
+}
+.p-radiobutton .p-radiobutton-box.p-highlight {
+  border-color: #0146fd;
+  background: #0146fd;
+}
+.p-radiobutton .p-radiobutton-box.p-highlight:not(.p-disabled):hover {
+  border-color: #012ea6;
+  background: #012ea6;
+  color: #ffffff;
+}
+.p-input-filled .p-radiobutton .p-radiobutton-box.p-highlight {
+  background: #0146fd;
+}
+.p-input-filled .p-radiobutton .p-radiobutton-box.p-highlight:not(.p-disabled):hover {
+  background: #012ea6;
+}
+.p-rating .p-rating-icon.pi-star-fill {
+  color: #0146fd;
+}
+.p-rating:not(.p-disabled):not(.p-readonly) .p-rating-icon:hover {
+  color: #0146fd;
+}
+.p-selectbutton .p-button.p-highlight {
+  background: #0146fd;
+  border-color: #0146fd;
+  color: #ffffff;
+}
+.p-selectbutton .p-button.p-highlight:hover {
+  background: #013bd4;
+  border-color: #013bd4;
+  color: #ffffff;
+}
+.p-slider .p-slider-handle {
+  height: 1.143rem;
+  width: 1.143rem;
+  background: #ffffff;
+  border: 2px solid #0146fd;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.p-slider .p-slider-range {
+  background: #0146fd;
+}
+.p-slider:not(.p-disabled) .p-slider-handle:hover {
+  background: #0146fd;
+  border-color: #0146fd;
+}
+.p-togglebutton.p-button.p-highlight {
+  background: #0146fd;
+  border-color: #0146fd;
+  color: #ffffff;
+}
+.p-togglebutton.p-button.p-highlight:hover {
+  background: #013bd4;
+  border-color: #013bd4;
+  color: #ffffff;
+}
+.p-treeselect:not(.p-disabled):hover {
+  border-color: #0146fd;
+}
+.p-treeselect:not(.p-disabled).p-focus {
+  outline: 0 none;
+  outline-offset: 0;
+  box-shadow: 0 0 0 0.2rem #bfdbfe;
+  border-color: #0146fd;
+}
+.p-button {
+  color: #ffffff;
+  background: #0146fd;
+  border: 1px solid #0146fd;
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  border-radius: 6px;
+}
+.p-button:enabled:hover {
+  background: #013bd4;
+  color: #ffffff;
+  border-color: #013bd4;
+}
+.p-button:enabled:active {
+  background: #012ea6;
+  color: #ffffff;
+  border-color: #012ea6;
+}
+.p-button.p-button-outlined {
+  background-color: transparent;
+  color: #0146fd;
+  border: 1px solid;
+}
+.p-button.p-button-outlined:enabled:hover {
+  background: rgba(59, 130, 246, 0.04);
+  color: #0146fd;
+  border: 1px solid;
+}
+.p-button.p-button-outlined:enabled:active {
+  background: rgba(59, 130, 246, 0.16);
+  color: #0146fd;
+  border: 1px solid;
+}
+.p-button.p-button-text {
+  background-color: transparent;
+  color: #0146fd;
+  border-color: transparent;
+}
+.p-button.p-button-text:enabled:hover {
+  background: rgba(59, 130, 246, 0.04);
+  color: #0146fd;
+  border-color: transparent;
+}
+.p-button.p-button-text:enabled:active {
+  background: rgba(59, 130, 246, 0.16);
+  color: #0146fd;
+  border-color: transparent;
+}
+.p-button .p-badge {
+  margin-left: 0.5rem;
+  min-width: 1rem;
+  height: 1rem;
+  line-height: 1rem;
+  color: #0146fd;
+  background-color: #ffffff;
+}
+.p-button.p-button-info,
+.p-buttonset.p-button-info > .p-button,
+.p-splitbutton.p-button-info > .p-button {
+  color: #ffffff;
+  background: #0146fd;
+  border: 1px solid #0146fd;
+}
+.p-button.p-button-info:enabled:hover,
+.p-buttonset.p-button-info > .p-button:enabled:hover,
+.p-splitbutton.p-button-info > .p-button:enabled:hover {
+  background: #013bd4;
+  color: #ffffff;
+  border-color: #013bd4;
+}
+.p-button.p-button-info:enabled:active,
+.p-buttonset.p-button-info > .p-button:enabled:active,
+.p-splitbutton.p-button-info > .p-button:enabled:active {
+  background: #012ea6;
+  color: #ffffff;
+  border-color: #012ea6;
+}
+.p-button.p-button-info.p-button-outlined,
+.p-buttonset.p-button-info > .p-button.p-button-outlined,
+.p-splitbutton.p-button-info > .p-button.p-button-outlined {
+  background-color: transparent;
+  color: #0146fd;
+  border: 1px solid;
+}
+.p-button.p-button-info.p-button-outlined:enabled:hover,
+.p-buttonset.p-button-info > .p-button.p-button-outlined:enabled:hover,
+.p-splitbutton.p-button-info > .p-button.p-button-outlined:enabled:hover {
+  background: rgba(59, 130, 246, 0.04);
+  color: #0146fd;
+  border: 1px solid;
+}
+.p-button.p-button-info.p-button-outlined:enabled:active,
+.p-buttonset.p-button-info > .p-button.p-button-outlined:enabled:active,
+.p-splitbutton.p-button-info > .p-button.p-button-outlined:enabled:active {
+  background: rgba(59, 130, 246, 0.16);
+  color: #0146fd;
+  border: 1px solid;
+}
+.p-button.p-button-info.p-button-text,
+.p-buttonset.p-button-info > .p-button.p-button-text,
+.p-splitbutton.p-button-info > .p-button.p-button-text {
+  background-color: transparent;
+  color: #0146fd;
+  border-color: transparent;
+}
+.p-button.p-button-info.p-button-text:enabled:hover,
+.p-buttonset.p-button-info > .p-button.p-button-text:enabled:hover,
+.p-splitbutton.p-button-info > .p-button.p-button-text:enabled:hover {
+  background: rgba(59, 130, 246, 0.04);
+  border-color: transparent;
+  color: #0146fd;
+}
+.p-button.p-button-info.p-button-text:enabled:active,
+.p-buttonset.p-button-info > .p-button.p-button-text:enabled:active,
+.p-splitbutton.p-button-info > .p-button.p-button-text:enabled:active {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: transparent;
+  color: #0146fd;
+}
+.p-button.p-button-link {
+  color: #012ea6;
+  background: transparent;
+  border: transparent;
+}
+.p-button.p-button-link:enabled:hover {
+  background: transparent;
+  color: #012ea6;
+  border-color: transparent;
+}
+.p-button.p-button-link:enabled:active {
+  background: transparent;
+  color: #012ea6;
+  border-color: transparent;
+}
+.p-splitbutton.p-button-outlined > .p-button {
+  background-color: transparent;
+  color: #0146fd;
+  border: 1px solid;
+}
+.p-splitbutton.p-button-outlined > .p-button:enabled:hover,
+.p-splitbutton.p-button-outlined > .p-button:not(button):not(a):not(.p-disabled):hover {
+  background: rgba(59, 130, 246, 0.04);
+  color: #0146fd;
+}
+.p-splitbutton.p-button-outlined > .p-button:enabled:active,
+.p-splitbutton.p-button-outlined > .p-button:not(button):not(a):not(.p-disabled):active {
+  background: rgba(59, 130, 246, 0.16);
+  color: #0146fd;
+}
+.p-splitbutton.p-button-text > .p-button {
+  background-color: transparent;
+  color: #0146fd;
+  border-color: transparent;
+}
+.p-splitbutton.p-button-text > .p-button:enabled:hover,
+.p-splitbutton.p-button-text > .p-button:not(button):not(a):not(.p-disabled):hover {
+  background: rgba(59, 130, 246, 0.04);
+  color: #0146fd;
+  border-color: transparent;
+}
+.p-splitbutton.p-button-text > .p-button:enabled:active,
+.p-splitbutton.p-button-text > .p-button:not(button):not(a):not(.p-disabled):active {
+  background: rgba(59, 130, 246, 0.16);
+  color: #0146fd;
+  border-color: transparent;
+}
+.p-splitbutton.p-button-info.p-button-outlined > .p-button {
+  background-color: transparent;
+  color: #0146fd;
+  border: 1px solid;
+}
+.p-splitbutton.p-button-info.p-button-outlined > .p-button:enabled:hover,
+.p-splitbutton.p-button-info.p-button-outlined > .p-button:not(button):not(a):not(.p-disabled):hover {
+  background: rgba(59, 130, 246, 0.04);
+  color: #0146fd;
+}
+.p-splitbutton.p-button-info.p-button-outlined > .p-button:enabled:active,
+.p-splitbutton.p-button-info.p-button-outlined > .p-button:not(button):not(a):not(.p-disabled):active {
+  background: rgba(59, 130, 246, 0.16);
+  color: #0146fd;
+}
+.p-splitbutton.p-button-info.p-button-text > .p-button {
+  background-color: transparent;
+  color: #0146fd;
+  border-color: transparent;
+}
+.p-splitbutton.p-button-info.p-button-text > .p-button:enabled:hover,
+.p-splitbutton.p-button-info.p-button-text > .p-button:not(button):not(a):not(.p-disabled):hover {
+  background: rgba(59, 130, 246, 0.04);
+  border-color: transparent;
+  color: #0146fd;
+}
+.p-splitbutton.p-button-info.p-button-text > .p-button:enabled:active,
+.p-splitbutton.p-button-info.p-button-text > .p-button:not(button):not(a):not(.p-disabled):active {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: transparent;
+  color: #0146fd;
+}
+.p-carousel .p-carousel-indicators .p-carousel-indicator.p-highlight button {
+  background: #eaf0ff;
+  color: #012ea6;
+}
+.p-datatable .p-sortable-column .p-sortable-column-badge {
+  border-radius: 50%;
+  height: 1.143rem;
+  min-width: 1.143rem;
+  line-height: 1.143rem;
+  color: #012ea6;
+  background: #eaf0ff;
+  margin-left: 0.5rem;
+}
+.p-datatable .p-sortable-column.p-highlight {
+  background: #eaf0ff;
+  color: #012ea6;
+}
+.p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon {
+  color: #012ea6;
+}
+.p-datatable .p-sortable-column.p-highlight:hover {
+  background: #eaf0ff;
+  color: #012ea6;
+}
+.p-datatable .p-sortable-column.p-highlight:hover .p-sortable-column-icon {
+  color: #012ea6;
+}
+.p-datatable .p-datatable-tbody > tr.p-highlight {
+  background: #eaf0ff;
+  color: #012ea6;
+}
+.p-datatable .p-datatable-tbody > tr.p-datatable-dragpoint-top > td {
+  box-shadow: inset 0 2px 0 0 #eaf0ff;
+}
+.p-datatable .p-datatable-tbody > tr.p-datatable-dragpoint-bottom > td {
+  box-shadow: inset 0 -2px 0 0 #eaf0ff;
+}
+.p-datatable .p-column-resizer-helper {
+  background: #0146fd;
+}
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr:nth-child(even).p-highlight {
+  background: #eaf0ff;
+  color: #012ea6;
+}
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr:nth-child(even).p-highlight .p-row-toggler {
+  color: #012ea6;
+}
+.p-datatable.p-datatable-striped
+  .p-datatable-tbody
+  > tr:nth-child(even).p-highlight
+  .p-row-toggler:hover {
+  color: #012ea6;
+}
+.p-column-filter-menu-button.p-column-filter-menu-button-active,
+.p-column-filter-menu-button.p-column-filter-menu-button-active:hover {
+  background: #eaf0ff;
+  color: #012ea6;
+}
+.p-column-filter-overlay .p-column-filter-row-items .p-column-filter-row-item.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-orderlist .p-orderlist-list .p-orderlist-item.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-organizationchart .p-organizationchart-node-content.p-highlight {
+  background: #eaf0ff;
+  color: #012ea6;
+}
+.p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+  background: #eaf0ff;
+  border-color: #eaf0ff;
+  color: #012ea6;
+}
+.p-picklist .p-picklist-list .p-picklist-item.p-highlight {
+  color: #012ea6;
+  background: #eaf0ff;
+}
+.p-timeline .p-timeline-event-marker {
+  border: 2px solid #0146fd;
+  border-radius: 50%;
+  width: 1rem;
+  height: 1rem;
+  background-color: #ffffff;
+}
+.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight {
+  background: #eaf0ff;
+  color: #012ea6;
+}
+.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight .p-tree-toggler,
+.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight .p-treenode-icon {
+  color: #012ea6;
+}
+.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight .p-tree-toggler:hover,
+.p-tree .p-tree-container .p-treenode .p-treenode-content.p-highlight .p-treenode-icon:hover {
+  color: #012ea6;
+}
+.p-tree.p-tree-horizontal .p-treenode .p-treenode-content.p-highlight {
+  background-color: #eaf0ff;
+  color: #012ea6;
+}
+.p-tree.p-tree-horizontal .p-treenode .p-treenode-content.p-highlight .p-treenode-icon {
+  color: #012ea6;
+}
+.p-treetable .p-sortable-column .p-sortable-column-badge {
+  border-radius: 50%;
+  height: 1.143rem;
+  min-width: 1.143rem;
+  line-height: 1.143rem;
+  color: #012ea6;
+  background: #eaf0ff;
+  margin-left: 0.5rem;
+}
+.p-treetable .p-sortable-column.p-highlight {
+  background: #eaf0ff;
+  color: #012ea6;
+}
+.p-treetable .p-sortable-column.p-highlight .p-sortable-column-icon {
+  color: #012ea6;
+}
+.p-treetable .p-treetable-tbody > tr.p-highlight {
+  background: #eaf0ff;
+  color: #012ea6;
+}
+.p-treetable .p-treetable-tbody > tr.p-highlight .p-treetable-toggler {
+  color: #012ea6;
+}
+.p-treetable .p-treetable-tbody > tr.p-highlight .p-treetable-toggler:hover {
+  color: #012ea6;
+}
+.p-treetable .p-column-resizer-helper {
+  background: #0146fd;
+}
+.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  background: #ffffff;
+  border-color: #0146fd;
+  color: #0146fd;
+}
+.p-tabview .p-tabview-nav-btn.p-link {
+  background: #ffffff;
+  color: #0146fd;
+  width: 3rem;
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+    0 1px 5px 0 rgba(0, 0, 0, 0.12);
+  border-radius: 0;
+}
+.p-overlaypanel .p-overlaypanel-close {
+  background: #0146fd;
+  color: #ffffff;
+  width: 2rem;
+  height: 2rem;
+  transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+  border-radius: 50%;
+  position: absolute;
+  top: -1rem;
+  right: -1rem;
+}
+.p-overlaypanel .p-overlaypanel-close:enabled:hover {
+  background: #013bd4;
+  color: #ffffff;
+}
+.p-fileupload-choose:not(.p-disabled):hover {
+  background: #013bd4;
+  color: #ffffff;
+  border-color: #013bd4;
+}
+.p-fileupload-choose:not(.p-disabled):active {
+  background: #012ea6;
+  color: #ffffff;
+  border-color: #012ea6;
+}
+.p-steps .p-steps-item.p-highlight .p-steps-number {
+  background: #eaf0ff;
+  color: #012ea6;
+}
+.p-badge {
+  background: #0146fd;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  line-height: 1.5rem;
+}
+.p-badge.p-badge-info {
+  background-color: #0146fd;
+  color: #ffffff;
+}
+.p-progressbar .p-progressbar-value {
+  border: 0 none;
+  margin: 0;
+  background: #0146fd;
+}
+.p-tag {
+  background: #0146fd;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.4rem;
+  border-radius: 6px;
+}
+.p-tag.p-tag-info {
+  background-color: #0146fd;
+  color: #ffffff;
+}
+
+// p-message/p-toast severity="info" no tema usa um tom índigo/roxo (#696cff)
+// completamente à parte da rampa azul do botão — não é um dos 4 tons que o
+// script de geração procurou, por isso ficou de fora da recolorização
+// automática acima. Usado em telas com aviso "somente leitura" (Origem,
+// Consulta do Lote) — sem isso, a mensagem sai roxa, destoando da marca.
+.p-message.p-message-info {
+  background: #eaf0ff;
+  border-color: #0146fd;
+  color: #012ea6;
+}
+.p-message.p-message-info .p-message-icon,
+.p-message.p-message-info .p-message-close {
+  color: #012ea6;
+}
+.p-toast .p-toast-message.p-toast-message-info {
+  background: #eaf0ff;
+  border-color: #0146fd;
+  color: #012ea6;
+}
+.p-toast .p-toast-message.p-toast-message-info .p-toast-message-icon,
+.p-toast .p-toast-message.p-toast-message-info .p-toast-icon-close {
+  color: #012ea6;
+}
+
+// Texto/rótulos gerais — pedido do usuário em 2026-08-20 pra ir além de
+// título/botão/ícone e tingir também o texto "comum" (rótulo de campo, texto
+// de tabela, item de dropdown etc). Mesmo problema do bloco de azul acima:
+// --text-color/--text-color-secondary sozinhas não bastam porque o tema
+// grava a cor em hex fixo (#495057/#6c757d) direto em cada componente — é
+// literalmente esse hex, não `var(--text-color)`, que `.p-card` (e por
+// herança quase toda a tela, já que tudo mora dentro de um <p-card>) usa.
+// Troca #495057 → #33415C (slate-blue escuro, no lugar de --text-color) e
+// #6c757d → #5D6B85 (slate-blue claro, no lugar de --text-color-secondary),
+// só nos seletores dos componentes que o projeto realmente usa (Card,
+// Dropdown, InputText/Textarea/Number, Calendar, RadioButton, DataTable,
+// Steps) — gerado com o mesmo método/script do bloco de azul.
+.p-datepicker {
+  color: #33415c;
+}
+.p-datepicker .p-datepicker-header {
+  color: #33415c;
+}
+.p-datepicker .p-datepicker-header .p-datepicker-prev,
+.p-datepicker .p-datepicker-header .p-datepicker-next {
+  color: #5d6b85;
+}
+.p-datepicker .p-datepicker-header .p-datepicker-title .p-datepicker-year,
+.p-datepicker .p-datepicker-header .p-datepicker-title .p-datepicker-month {
+  color: #33415c;
+}
+.p-datepicker table td.p-datepicker-today > span {
+  color: #33415c;
+}
+.p-datepicker .p-timepicker button {
+  color: #5d6b85;
+}
+p-calendar.p-calendar-clearable .p-calendar-clear-icon,
+p-calendar.p-calendar-clearable.p-calendar-w-btn .p-calendar-clear-icon {
+  color: #5d6b85;
+}
+.p-dropdown .p-dropdown-label.p-placeholder {
+  color: #5d6b85;
+}
+.p-dropdown .p-dropdown-trigger,
+.p-dropdown .p-dropdown-clear-icon {
+  color: #5d6b85;
+}
+.p-dropdown-panel {
+  color: #33415c;
+}
+.p-dropdown-panel .p-dropdown-header .p-dropdown-filter-icon {
+  color: #5d6b85;
+}
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item,
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover,
+.p-dropdown-panel .p-dropdown-items .p-dropdown-empty-message {
+  color: #33415c;
+}
+p-inputnumber.p-inputnumber-clearable .p-inputnumber-clear-icon {
+  color: #5d6b85;
+}
+.p-inputtext {
+  color: #33415c;
+}
+.p-radiobutton .p-radiobutton-box {
+  color: #33415c;
+}
+.p-button.p-button-outlined.p-button-plain,
+.p-button.p-button-outlined.p-button-plain:enabled:hover,
+.p-button.p-button-outlined.p-button-plain:enabled:active,
+.p-button.p-button-text.p-button-plain,
+.p-button.p-button-text.p-button-plain:enabled:hover,
+.p-button.p-button-text.p-button-plain:enabled:active {
+  color: #5d6b85;
+}
+.p-datatable .p-datatable-tbody > tr,
+.p-datatable.p-datatable-hoverable-rows .p-datatable-tbody > tr:not(.p-highlight):hover {
+  color: #33415c;
+}
+.p-datatable .p-datatable-tbody > tr > td .p-row-toggler,
+.p-datatable .p-datatable-tbody > tr > td .p-row-editor-init,
+.p-datatable .p-datatable-tbody > tr > td .p-row-editor-save,
+.p-datatable .p-datatable-tbody > tr > td .p-row-editor-cancel {
+  color: #5d6b85;
+}
+.p-card {
+  color: #33415c;
+}
+.p-card .p-card-subtitle {
+  color: #5d6b85;
+}
+.p-steps .p-steps-item .p-menuitem-link .p-steps-number {
+  color: #33415c;
+}
+.p-steps .p-steps-item .p-menuitem-link .p-steps-title {
+  color: #5d6b85;
+}
+.p-steps .p-steps-item.p-highlight .p-steps-title {
+  color: #33415c;
+}

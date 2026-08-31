@@ -1,0 +1,210 @@
+<app-page-header
+  titulo="Impressão / Consulta"
+  subtitulo="Visualização somente-leitura da Solicitação de Transferência de Classificação Contábil."
+></app-page-header>
+
+<p-card>
+  <ng-template pTemplate="header">
+    <div class="card-header-com-icone">
+      <i class="pi pi-file"></i>
+      <span>Dados da Solicitação</span>
+    </div>
+  </ng-template>
+  <div class="grid formgrid">
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Número STC</label>
+      <span class="font-bold">{{ dadosFormulario.numeroStc || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Status</label>
+      <p-tag
+        *ngIf="dadosFormulario.status; else semStatus"
+        [value]="dadosFormulario.status"
+        [severity]="severidadeStatus"
+      ></p-tag>
+      <ng-template #semStatus><span class="font-bold">-</span></ng-template>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Modalidade</label>
+      <span class="font-bold">{{ dadosFormulario.tipoTransferencia || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-3" *ngIf="dadosFormulario.numLote">
+      <label class="block text-color-secondary">Lote</label>
+      <span class="font-bold">{{ dadosFormulario.numLote }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Empresa</label>
+      <span class="font-bold">{{ dadosFormulario.codEmp || '-' }} - {{ dadosFormulario.nomEmp || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Filial</label>
+      <span class="font-bold">{{ dadosFormulario.codFil || '-' }} - {{ dadosFormulario.nomFil || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Solicitante</label>
+      <span class="font-bold">{{ dadosFormulario.solicitante || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Área Solicitante</label>
+      <span class="font-bold">{{ dadosFormulario.areaSolicitante || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-3">
+      <label class="block text-color-secondary">Data de Abertura</label>
+      <span class="font-bold">{{ dadosFormulario.dataAbertura || '-' }}</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="block text-color-secondary">Justificativa da Solicitação</label>
+    <p>{{ dadosFormulario.justificativa || '-' }}</p>
+  </div>
+</p-card>
+
+<p-card header="Linhas — Origem x Destino" styleClass="mt-3">
+  <div class="overflow-x-auto">
+    <p-table [value]="linhasComparativo" dataKey="lancamento" [paginator]="true" [rows]="10">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Lançamento</th>
+          <th>Conta Origem</th>
+          <th>Natureza Origem</th>
+          <th>Conta Destino</th>
+          <th>Natureza Destino</th>
+          <th>Valor Débito</th>
+          <th>Valor Crédito</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-linha>
+        <tr>
+          <td>{{ linha.lancamento }}</td>
+          <td>{{ linha.origem.ctaRed }}</td>
+          <td>{{ linha.origem.natureza }}</td>
+          <td>{{ linha.destino?.ctaRed }} - {{ linha.destino?.desCta }}</td>
+          <td>{{ linha.destino?.natureza }}</td>
+          <!-- Débito = Crédito = valor da linha (gera 1 rateio Destino + 1
+          rateio Origem-estorno no ERP, um D um C — ver
+          functions/integracao-erp.ts). -->
+          <td>R$ {{ (linha.destino?.valor || linha.origem.valor) | moeda }}</td>
+          <td>R$ {{ (linha.destino?.valor || linha.origem.valor) | moeda }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center">Nenhuma linha registrada para esta solicitação.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <div class="resumo-financeiro mt-3 justify-content-end">
+    <div class="resumo-financeiro-item">
+      <span class="resumo-financeiro-rotulo">Débito Total</span>
+      <span class="resumo-financeiro-valor">R$ {{ debitoTotal | moeda }}</span>
+    </div>
+    <div class="resumo-financeiro-item">
+      <span class="resumo-financeiro-rotulo">Crédito Total</span>
+      <span class="resumo-financeiro-valor">R$ {{ creditoTotal | moeda }}</span>
+    </div>
+    <div
+      class="resumo-financeiro-item resumo-financeiro-saldo"
+      [ngClass]="{ 'resumo-financeiro-divergente': saldo !== 0 }"
+    >
+      <span class="resumo-financeiro-rotulo">Saldo</span>
+      <span class="resumo-financeiro-valor">R$ {{ saldo | moeda }}</span>
+    </div>
+  </div>
+</p-card>
+
+<p-card header="Histórico de Aprovações" styleClass="mt-3">
+  <div class="grid">
+    <div class="col-12 md:col-6">
+      <label class="block text-color-secondary">Aprovação CAPEX/OPEX (Orçamentária)</label>
+      <p class="mt-1">{{ dadosFormulario.parecerOrcamentaria || 'Ainda não decidido.' }}</p>
+    </div>
+    <div class="col-12 md:col-6">
+      <label class="block text-color-secondary">Área Contábil</label>
+      <p class="mt-1">{{ dadosFormulario.parecerAreaContabil || 'Ainda não decidido.' }}</p>
+    </div>
+  </div>
+</p-card>
+
+<!-- Loop por gestor de Origem e de Destino (RN046/049/050, ver PROGRESSO.md
+"Atualização 2026-08-22"/"2026-08-26"): cada rateio/linha pode ter um gestor
+diferente — este painel mostra, pra cada gestor distinto, se ele já decidiu
+(com o parecer dele), se é a vez dele agora, ou se ainda está na fila. Pedido
+do usuário em 2026-08-26: "controle geral" de quem aprovou o quê. -->
+<p-card header="Controle Geral por Gestor" styleClass="mt-3">
+  <p class="text-sm text-color-secondary mt-0 mb-3">
+    Cada gestor decide só sobre os rateios/linhas sob sua responsabilidade — aqui dá pra ver o
+    status de todos, mesmo os que ainda não chegaram na fila.
+  </p>
+  <div class="grid">
+    <div class="col-12 lg:col-6">
+      <label class="block text-color-secondary mb-2">Gestores de Origem</label>
+      <div class="overflow-x-auto" *ngIf="statusGestoresOrigem.length; else semGestorOrigem">
+        <p-table [value]="statusGestoresOrigem">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Gestor</th>
+              <th>Rateios</th>
+              <th>Status</th>
+              <th>Parecer</th>
+              <th>Data</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td>{{ item.gestor }}</td>
+              <td>{{ rateiosDoGestorOrigem(item.gestor) }}</td>
+              <td>
+                <p-tag
+                  [value]="rotuloStatusGestor(item.status)"
+                  [severity]="severidadeStatusGestor(item.status)"
+                ></p-tag>
+              </td>
+              <td>{{ item.parecer || '-' }}</td>
+              <td>{{ item.data ? (item.data | date: 'dd/MM/yyyy HH:mm') : '-' }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+      <ng-template #semGestorOrigem>
+        <p class="mt-1 text-color-secondary">Nenhum gestor de origem identificado ainda.</p>
+      </ng-template>
+    </div>
+
+    <div class="col-12 lg:col-6">
+      <label class="block text-color-secondary mb-2">Gestores de Destino</label>
+      <div class="overflow-x-auto" *ngIf="statusGestoresDestino.length; else semGestorDestino">
+        <p-table [value]="statusGestoresDestino">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Gestor</th>
+              <th>Linhas</th>
+              <th>Status</th>
+              <th>Parecer</th>
+              <th>Data</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td>{{ item.gestor }}</td>
+              <td>{{ linhasDoGestorDestino(item.gestor) }}</td>
+              <td>
+                <p-tag
+                  [value]="rotuloStatusGestor(item.status)"
+                  [severity]="severidadeStatusGestor(item.status)"
+                ></p-tag>
+              </td>
+              <td>{{ item.parecer || '-' }}</td>
+              <td>{{ item.data ? (item.data | date: 'dd/MM/yyyy HH:mm') : '-' }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+      <ng-template #semGestorDestino>
+        <p class="mt-1 text-color-secondary">Nenhum gestor de destino identificado ainda.</p>
+      </ng-template>
+    </div>
+  </div>
+</p-card>

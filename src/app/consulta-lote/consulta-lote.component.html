@@ -1,0 +1,134 @@
+<app-spinner [carregandoDados]="carregando"></app-spinner>
+
+<app-page-header
+  titulo="Nova Solicitação - Por Lote"
+  subtitulo="Consulte e selecione o lote de lançamentos contábeis elegível para a transferência."
+></app-page-header>
+
+<app-devolucao-banner [motivo]="dadosFormulario.parecerOrcamentaria"></app-devolucao-banner>
+
+<!-- Pedido do usuário em 2026-08-31: deixar visível qual lote já está
+selecionado (STC devolvida ou navegação de volta), sem precisar rolar até
+achar a linha marcada na tabela lá embaixo. -->
+<p-message
+  *ngIf="loteSelecionado"
+  severity="success"
+  styleClass="w-full mb-3"
+  [text]="
+    'Lote selecionado: ' + loteSelecionado.numLot + (loteSelecionado.desLot ? ' - ' + loteSelecionado.desLot : '')
+  "
+></p-message>
+
+<p-card header="Filtros de Pesquisa">
+  <div class="grid formgrid p-fluid" [formGroup]="form">
+    <div class="field col-6 md:col-3">
+      <label>Empresa</label>
+      <input type="text" pInputText [value]="dadosFormulario.codEmp || ''" disabled />
+    </div>
+    <div class="field col-6 md:col-3">
+      <label>Filial</label>
+      <input type="text" pInputText [value]="dadosFormulario.codFil || ''" disabled />
+    </div>
+    <div class="field col-6 md:col-2">
+      <label for="anoLote">Ano do Lote</label>
+      <p-inputNumber
+        inputId="anoLote"
+        formControlName="anoLote"
+        [useGrouping]="false"
+        (onInput)="aplicarFiltros()"
+      ></p-inputNumber>
+    </div>
+    <div class="field col-6 md:col-2">
+      <label for="numLote">Lote</label>
+      <input
+        id="numLote"
+        type="text"
+        pInputText
+        formControlName="numLote"
+        placeholder="Número do lote"
+        (input)="aplicarFiltros()"
+      />
+    </div>
+  </div>
+
+  <div class="flex justify-content-end">
+    <p-button label="Pesquisar" icon="pi pi-search" (click)="consultar()"></p-button>
+  </div>
+</p-card>
+
+<p-message
+  severity="warn"
+  text="Somente 1 lote pode ser selecionado por STC."
+  styleClass="w-full mt-3"
+></p-message>
+
+<p-card header="Lotes Elegíveis Encontrados ({{ lotes.length }})" styleClass="mt-3">
+  <div class="overflow-x-auto">
+  <p-table
+    [value]="lotesOrdenados"
+    dataKey="numLot"
+    [(selection)]="loteSelecionado"
+    selectionMode="single"
+    [paginator]="true"
+    [rows]="10"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 3rem"></th>
+        <th>Lote</th>
+        <th>Data</th>
+        <th>Descrição</th>
+        <th>Débito</th>
+        <th>Crédito</th>
+        <th>Informado</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-lote>
+      <tr>
+        <td>
+          <p-tableRadioButton [value]="lote"></p-tableRadioButton>
+        </td>
+        <td>{{ lote.numLot }}</td>
+        <td>{{ lote.datLot }}</td>
+        <td>{{ lote.desLot }}</td>
+        <td>R$ {{ lote.totDeb | moeda }}</td>
+        <td>R$ {{ lote.totCre | moeda }}</td>
+        <td>R$ {{ lote.totInf | moeda }}</td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="text-center">
+          {{
+            consultou
+              ? 'Nenhum lote elegível encontrado para os filtros informados.'
+              : 'Consultando...'
+          }}
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+  </div>
+
+  <p-message
+    severity="info"
+    text="A lista exibe os lotes elegíveis da Empresa/Filial selecionada. Use Ano/Lote para filtrar a lista já carregada."
+    styleClass="w-full mt-3"
+  ></p-message>
+</p-card>
+
+<div class="flex justify-content-between mt-3">
+  <p-button
+    label="Voltar"
+    styleClass="p-button-outlined"
+    icon="pi pi-arrow-left"
+    (click)="voltarEtapa()"
+  ></p-button>
+  <p-button
+    label="Avançar para Origem"
+    icon="pi pi-arrow-right"
+    iconPos="right"
+    (click)="avancarEtapa()"
+    [disabled]="!loteSelecionado"
+  ></p-button>
+</div>

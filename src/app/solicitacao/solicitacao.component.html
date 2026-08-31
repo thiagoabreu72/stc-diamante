@@ -1,0 +1,62 @@
+<app-wizard-stepper
+  [passos]="passos"
+  [passoAtivo]="passoAtivo"
+  [maiorPassoAlcancado]="maiorPassoAlcancado"
+  (passoClicado)="onPassoClicado($event)"
+></app-wizard-stepper>
+
+<!-- [hidden] em vez de *ngIf: o componente fica vivo ao trocar de passo, senão o
+Angular destrói e recria do zero, perdendo o formulário preenchido e forçando
+recarregar dados de novo. Os demais só são criados (*ngIf) na primeira vez que
+o passo é alcançado — depois disso também ficam vivos, só escondidos. -->
+<app-modalidade
+  [hidden]="passoAtivo !== 0"
+  (enviaMensagem)="enviaMensagem.emit($event)"
+  (proximaEtapa)="onModalidadeAvancar()"
+  (dadosDependentesInvalidados)="onDadosDependentesInvalidados()"
+></app-modalidade>
+
+<app-consulta-lote
+  *ngIf="loteVisitado"
+  [hidden]="passoAtivo !== 1"
+  [chaveEmpresaFilial]="chaveEmpresaFilial"
+  (enviaMensagem)="enviaMensagem.emit($event)"
+  (voltar)="voltarPara(0)"
+  (proximaEtapa)="onLoteAvancar()"
+></app-consulta-lote>
+
+<app-origem
+  *ngIf="origemVisitada"
+  [hidden]="passoAtivo !== 2"
+  [numLote]="numLoteSelecionado"
+  (enviaMensagem)="enviaMensagem.emit($event)"
+  (voltar)="voltarPara(1)"
+  (proximaEtapa)="onOrigemAvancar()"
+></app-origem>
+
+<app-destino
+  *ngIf="destinoVisitado"
+  [hidden]="passoAtivo !== 3"
+  [assinaturaOrigem]="assinaturaOrigem"
+  (enviaMensagem)="enviaMensagem.emit($event)"
+  (voltar)="voltarPara(2)"
+  (proximaEtapa)="onDestinoAvancar()"
+></app-destino>
+
+<!-- Modo Manual: Origem+Destino na mesma tela, mostrada nos passos 1 e 2. -->
+<app-origem-destino-manual
+  *ngIf="origemDestinoManualVisitado"
+  [hidden]="passoAtivo !== 1 && passoAtivo !== 2"
+  (enviaMensagem)="enviaMensagem.emit($event)"
+  (voltar)="voltarPara(0)"
+  (proximaEtapa)="onOrigemDestinoManualAvancar()"
+></app-origem-destino-manual>
+
+<!-- Por Lote: resumo só no passo 4 ("Resumo"). Manual: passo 3 ("Confirmação"),
+único passo final já que não há tela de aprovação separada aqui. -->
+<app-resumo
+  *ngIf="resumoVisitado"
+  [hidden]="passoAtivo !== (ehManual ? 3 : 4)"
+  (enviaMensagem)="enviaMensagem.emit($event)"
+  (voltar)="voltarPara(ehManual ? 1 : 3)"
+></app-resumo>

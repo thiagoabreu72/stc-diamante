@@ -1,0 +1,77 @@
+<div>
+  <div style="padding: 1% 1%">
+    <app-mensagem [dadosMensagem]="this.dadosMensagem"></app-mensagem>
+
+    <app-solicitacao
+      *ngIf="etapa === 'solicitante'"
+      (enviaMensagem)="getDadosMensagem($event)"
+    ></app-solicitacao>
+
+    <!-- Fluxo de aprovações confirmado com o cliente em 2026-08-17 ("fluxo diamante.png"):
+    só a etapa orçamentária (STCMO) devolve pro solicitante; as demais encerram a STC
+    direto se não aprovarem (ver AprovacaoComponent). -->
+    <app-aprovacao
+      *ngIf="etapa === 'orcamentaria'"
+      titulo="Aprovação CAPEX/OPEX — Contabilidade Orçamentária"
+      subtitulo="Analise a solicitação e registre a aprovação orçamentária."
+      labelNegativo="Reprovar"
+      campoParecer="parecerOrcamentaria"
+      [voltaParaSolicitante]="true"
+      (enviaMensagem)="getDadosMensagem($event)"
+    ></app-aprovacao>
+
+    <!-- Loop por gestor de origem (RN046/049/050 espelhado pra Origem em
+    2026-08-26): rateios de um mesmo lançamento podem ter Centro de Custo (e
+    portanto gestor) diferentes entre si — cada gestor distinto passa por
+    esta mesma tela, vendo só os seus rateios, até todos decidirem (ver
+    AprovacaoComponent.loopPorGestorOrigem). -->
+    <app-aprovacao
+      *ngIf="etapa === 'gestor-origem'"
+      titulo="Aprovação do Gestor de Origem"
+      subtitulo="Analise as linhas sob sua responsabilidade e registre sua decisão."
+      labelNegativo="Cancelar"
+      campoParecer="parecerGestorOrigem"
+      [loopPorGestorOrigem]="true"
+      (enviaMensagem)="getDadosMensagem($event)"
+    ></app-aprovacao>
+
+    <!-- Loop por gestor de destino (RN046/049/050, 2026-08-22): no Destino
+    Múltiplo pode haver mais de um gestor (um por CC/rateio) — cada um passa
+    por esta mesma tela, vendo só as suas linhas, até todos decidirem (ver
+    AprovacaoComponent.loopPorGestorDestino). -->
+    <app-aprovacao
+      *ngIf="etapa === 'gestor-destino'"
+      titulo="Aprovação do Gestor de Destino"
+      subtitulo="Analise as linhas sob sua responsabilidade e registre sua decisão."
+      labelNegativo="Cancelar"
+      campoParecer="parecerGestorDestino"
+      [loopPorGestorDestino]="true"
+      (enviaMensagem)="getDadosMensagem($event)"
+    ></app-aprovacao>
+
+    <app-aprovacao
+      *ngIf="etapa === 'contabil'"
+      titulo="Validação Contábil Final — Área Contábil"
+      subtitulo="Confira as informações e libere a integração no ERP Senior."
+      labelAprovar="Liberar Integração ERP"
+      mensagemAprovado="Integração liberada — decisão registrada. Use o envio do BPM para confirmar e finalizar a task."
+      campoParecer="parecerAreaContabil"
+      [mostrarChecklist]="true"
+      [somenteIntegrar]="true"
+      (enviaMensagem)="getDadosMensagem($event)"
+    ></app-aprovacao>
+
+    <!-- Fallback: qualquer etapa fora das 5 conhecidas (ServiceBpmService.getEtapa()
+    devolve 'impressao' quando o hash não bate com nenhuma) — visualização
+    somente-leitura da STC inteira, sem ação nenhuma pro BPM. -->
+    <app-impressao
+      *ngIf="
+        etapa !== 'solicitante' &&
+        etapa !== 'orcamentaria' &&
+        etapa !== 'gestor-origem' &&
+        etapa !== 'gestor-destino' &&
+        etapa !== 'contabil'
+      "
+    ></app-impressao>
+  </div>
+</div>

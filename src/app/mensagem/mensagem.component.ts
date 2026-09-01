@@ -59,10 +59,15 @@ export class MensagemComponent implements OnChanges {
   }
 
   showError() {
+    // `sticky: true` — pedido do usuário em 2026-08-31: o toast de erro
+    // sumia rápido demais (padrão do PrimeNG, ~3s) sem dar tempo de ler uma
+    // mensagem mais longa (ex: erro de negócio do Sapiens no postLancamentos,
+    // várias linhas). Erro fica na tela até o usuário fechar manualmente.
     this.messageService.add({
       severity: 'error',
       summary: 'Erro',
       detail: this.dadosMensagem.mensagem,
+      sticky: true,
     });
   }
 }

@@ -1,0 +1,11 @@
+// Card de erro fixo no fluxo da página (não overlay) pro erro de integração
+// com o ERP — ver comentário em aprovacao.component.html (p-dialog abandonado
+// por não renderizar corretamente dentro do iframe do Cockpit, 2026-08-31).
+// Mesmo padrão visual do .devolucao-card (styles.scss), só que vermelho.
+.erro-integracao-card {
+  padding: 1.1rem 1.25rem;
+  border-radius: 10px;
+  background: var(--red-50);
+  border: 1px solid var(--red-200);
+  border-left: 5px solid var(--red-500);
+}

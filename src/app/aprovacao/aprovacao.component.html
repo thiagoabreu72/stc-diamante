@@ -1,19 +1,26 @@
 <app-page-header [titulo]="titulo" [subtitulo]="subtitulo"></app-page-header>
 <app-spinner [carregandoDados]="carregandoIntegracao"></app-spinner>
 
-<p-dialog
-  header="Erro ao integrar"
-  [(visible)]="mostrarErroIntegracao"
-  [modal]="true"
-  [closable]="true"
-  [style]="{ width: '30rem' }"
->
-  <p class="m-0">Houve um erro ao tentar integrar.</p>
-  <p class="mt-2 mb-0 font-bold">{{ mensagemErroIntegracao }}</p>
-  <ng-template pTemplate="footer">
-    <p-button label="Fechar" (click)="mostrarErroIntegracao = false"></p-button>
-  </ng-template>
-</p-dialog>
+<!-- Abandonado o p-dialog (modal) pro erro de integração — usuário testou 2
+vezes com fixes diferentes (appendTo/baseZIndex) e a tela continuava
+travando em cinza, provavelmente o overlay do PrimeNG não funciona bem
+dentro do iframe do Cockpit. Substituído por um aviso FIXO no fluxo normal
+da página (mesmo padrão do p-message de decisaoRegistrada logo abaixo) —
+sem overlay, sem z-index, sem mask, não tem como "sumir atrás de nada".
+Fica visível até o usuário clicar em "Fechar". -->
+<div *ngIf="mostrarErroIntegracao" class="erro-integracao-card mb-3">
+  <div class="flex justify-content-between align-items-start gap-3">
+    <div>
+      <div class="font-bold text-red-700 mb-1">Erro ao tentar integrar</div>
+      <div style="white-space: pre-line">{{ mensagemErroIntegracao }}</div>
+    </div>
+    <p-button
+      icon="pi pi-times"
+      styleClass="p-button-text p-button-rounded p-button-danger"
+      (click)="mostrarErroIntegracao = false"
+    ></p-button>
+  </div>
+</div>
 
 <p-message
   *ngIf="decisaoRegistrada"

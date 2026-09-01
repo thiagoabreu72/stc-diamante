@@ -210,11 +210,22 @@ export class AprovacaoComponent implements OnInit {
   // Chama o port `postLancamentos` de verdade com o comparativo Origem×
   // Destino da STC inteira (ver construirLancamentosIntegracao —
   // functions/integracao-erp.ts). Contrato informado pelo usuário em
-  // 2026-08-31, NÃO testado contra a API real (ver ENDPOINTS.txt). O
-  // connector deste app, em outros ports, já demonstrou devolver HTTP 200
-  // mesmo em erro de negócio (status embutido no corpo) — por isso o
-  // sucesso/erro aqui é decidido pela presença de `msgRet` na resposta, não
-  // só pelo `error` do Observable (que ainda cobre falha real de rede/HTTP).
+  // 2026-08-31, NÃO testado contra a API real ponta a ponta ainda (ver
+  // ENDPOINTS.txt). Dois formatos de erro confirmados ao vivo/pelo usuário:
+  // (1) falha de TRANSPORTE — a chamada SOAP pro G5 nem chega a ser
+  // processada (ex: XML rejeitado), corpo vem com `responseCode` (número,
+  // ex: 400) + `message` (texto genérico tipo "Request failed with status
+  // code 400" + `logExecution` com o XML enviado); (2) falha de NEGÓCIO —
+  // G5 processa e devolve um `codRet`/`msgRet` de erro (formato exato ainda
+  // não visto ao vivo, só o nome dos campos foi confirmado pelo usuário:
+  // "o codRet é uma coisa e o msgRet é outra"). `extrairErroIntegracao()`
+  // (abaixo) cobre os dois. Tudo dentro de try/catch — pedido do usuário
+  // depois de ver a tela travar em cinza (spinner infinito) numa tentativa
+  // real: se ALGO inesperado no formato da resposta explodir uma exceção
+  // aqui, `carregandoIntegracao` tem que voltar a `false` de qualquer jeito
+  // e mostrar ALGUM erro, nunca travar a tela sem explicação. `postLancamentos()`
+  // (ServiceBpmService) também ganhou um timeout de 45s de segurança pro
+  // mesmo cenário (chamada que nunca resolve).
   integrarERP(): void {
     const f = this.servico.dadosFormulario;
     const tipo: 'M' | 'L' = f.tipoTransferencia === 'Manual' ? 'M' : 'L';
@@ -224,31 +235,72 @@ export class AprovacaoComponent implements OnInit {
     this.servico.postLancamentos(tipo, f.numeroStc, dados).subscribe({
       next: (retorno) => {
         this.carregandoIntegracao = false;
-        const msgRet = retorno?.outputData?.msgRet ?? retorno?.msgRet;
-        if (msgRet) {
-          this.abrirErroIntegracao(msgRet);
-          return;
+        try {
+          const erro = this.extrairErroIntegracao(retorno);
+          console.log('[STC][Integracao] postLancamentos resposta', { retorno, erro });
+          if (erro) {
+            this.abrirErroIntegracao(erro);
+            return;
+          }
+          this.registrarParecer();
+          this.servico.dadosFormulario.tipoAcao = 'Aprovar';
+          this.decisaoRegistrada = 'aprovado';
+          this.logDebugGateway('Aprovar');
+          this.enviaMensagem.emit({
+            tipo: 2,
+            mensagem: 'Integração realizada com sucesso. Use o envio do BPM para confirmar.',
+          });
+        } catch (e) {
+          console.error('[STC][Integracao] erro inesperado processando resposta', e, retorno);
+          this.abrirErroIntegracao('Resposta inesperada do ERP — confira o console.');
         }
-        this.registrarParecer();
-        this.servico.dadosFormulario.tipoAcao = 'Aprovar';
-        this.decisaoRegistrada = 'aprovado';
-        this.logDebugGateway('Aprovar');
-        this.enviaMensagem.emit({
-          tipo: 2,
-          mensagem: 'Integração realizada com sucesso. Use o envio do BPM para confirmar.',
-        });
       },
       error: (erro) => {
         this.carregandoIntegracao = false;
-        const msgRet = erro?.error?.outputData?.msgRet ?? erro?.error?.msgRet;
-        this.abrirErroIntegracao(msgRet);
+        try {
+          const mensagem = this.extrairErroIntegracao(erro?.error) ?? `Falha na comunicação com o ERP (HTTP ${erro?.status ?? '?'}).`;
+          console.log('[STC][Integracao] postLancamentos erro HTTP', { erro, mensagem });
+          this.abrirErroIntegracao(mensagem);
+        } catch (e) {
+          console.error('[STC][Integracao] erro inesperado processando erro HTTP', e, erro);
+          this.abrirErroIntegracao('Falha na comunicação com o ERP — confira o console.');
+        }
       },
     });
   }
 
-  private abrirErroIntegracao(msgRet: string | undefined): void {
-    this.mensagemErroIntegracao = msgRet || 'Erro não especificado pelo ERP.';
+  // Cobre os dois formatos de erro conhecidos (ver comentário de
+  // integrarERP() acima) — devolve a mensagem pra mostrar, ou `undefined`
+  // se não achar sinal de erro nenhum (tratado como sucesso).
+  private extrairErroIntegracao(retorno: any): string | undefined {
+    const corpo = retorno?.outputData ?? retorno;
+    if (!corpo) {
+      return undefined;
+    }
+    const responseCode = corpo.responseCode;
+    const falhaTransporte = responseCode != null && Number(responseCode) !== 200;
+    const codRet = corpo.codRet;
+    const falhaNegocio = codRet != null && String(codRet) !== '0' && Number(codRet) !== 200;
+    const mensagem: string | undefined = corpo.message || corpo.msgRet || corpo.msgErro;
+
+    if (!falhaTransporte && !falhaNegocio && !mensagem) {
+      return undefined;
+    }
+    if (mensagem) {
+      return mensagem;
+    }
+    const codigo = falhaTransporte ? responseCode : codRet;
+    return `Erro não especificado pelo ERP (código ${codigo}).`;
+  }
+
+  private abrirErroIntegracao(mensagem: string): void {
+    this.mensagemErroIntegracao = mensagem;
     this.mostrarErroIntegracao = true;
+    // O toast redundante (item 30, "Erro ao integrar: ...") foi removido em
+    // 2026-08-31 — pedido do usuário: apareciam 2 mensagens juntas (o card
+    // fixo no topo da página + o toast no canto), queria só o card fixo. O
+    // card (.erro-integracao-card, ver aprovacao.component.html) já é a
+    // forma definitiva de mostrar esse erro.
   }
 
   negar(): void {

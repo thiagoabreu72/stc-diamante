@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { delay, timeout } from 'rxjs/operators';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Mensagem } from '../interfaces/gerais.interface';
 import { Data, Info, ProcessVariables } from '../interfaces/workflow.interface';
@@ -449,7 +449,15 @@ export class ServiceBpmService {
       numSol,
       dados,
     });
-    return this.http.post<any>(this.urlInvoke, body, { headers });
+    // Timeout de segurança — usuário reportou ao vivo em 2026-08-31 a tela
+    // ficando travada em cinza (spinner infinito) numa tentativa de
+    // integração; mesmo com o subscribe tratando next/error corretamente,
+    // se a chamada nunca resolver (SOAP pro G5 pendurado, timeout de rede
+    // não propagado etc.) o Observable nunca emite nada e o spinner nunca
+    // libera. 45s dá tempo de sobra pra uma chamada SOAP real, mas garante
+    // que o usuário sempre recebe uma resposta (erro de timeout tratado
+    // como erro normal em AprovacaoComponent.integrarERP()).
+    return this.http.post<any>(this.urlInvoke, body, { headers }).pipe(timeout(45000));
   }
 
   // dd/mm/yyyy HH:mm — mesmo padrão dos p-calendar do resto do app

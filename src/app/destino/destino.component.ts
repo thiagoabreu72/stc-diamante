@@ -107,18 +107,6 @@ export class DestinoComponent implements OnInit, OnChanges {
     )?.usuRes;
   }
 
-  get debitoTotal(): number {
-    return this.totalPorNatureza('Debito');
-  }
-
-  get creditoTotal(): number {
-    return this.totalPorNatureza('Credito');
-  }
-
-  get saldo(): number {
-    return this.debitoTotal - this.creditoTotal;
-  }
-
   ngOnInit(): void {
     this.carregarListas();
     this.inicializarLinhasDestino();
@@ -456,16 +444,6 @@ export class DestinoComponent implements OnInit, OnChanges {
         });
       },
     });
-  }
-
-  private totalPorNatureza(natureza: 'Debito' | 'Credito'): number {
-    const linhas: { natureza?: 'Debito' | 'Credito'; valor?: number }[] =
-      this.modo === 'Unico'
-        ? this.linhasOrigem.map((o) => ({ natureza: o.natureza, valor: o.valor }))
-        : this.linhasDestino;
-    return linhas
-      .filter((l) => l.natureza === natureza)
-      .reduce((total, l) => total + (l.valor ?? 0), 0);
   }
 
   // Modo Múltiplo: cada linha (rateio) tem sua própria Conta, então o filtro

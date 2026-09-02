@@ -2,9 +2,10 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Mensagem } from '../interfaces/gerais.interface';
 import { Formulario, ParecerGestor } from '../interfaces/stc.interface';
 import { ServiceBpmService } from '../services/service-bpm.service';
-import { LinhaComparativo, montarComparativo, totalPorNatureza } from '../functions/comparativo';
+import { LinhaComparativo, montarComparativo } from '../functions/comparativo';
 import { gestoresDistintos, proximoGestorPendente } from '../functions/loop-gestor';
 import { construirLancamentosIntegracao } from '../functions/integracao-erp';
+import { scrollParaTopo } from '../functions/scroll';
 
 type CampoParecer =
   | 'parecerOrcamentaria'
@@ -134,18 +135,6 @@ export class AprovacaoComponent implements OnInit {
     return this.servico.dadosFormulario;
   }
 
-  get debitoTotal(): number {
-    return totalPorNatureza(this.linhasComparativo, 'Debito');
-  }
-
-  get creditoTotal(): number {
-    return totalPorNatureza(this.linhasComparativo, 'Credito');
-  }
-
-  get saldo(): number {
-    return this.debitoTotal - this.creditoTotal;
-  }
-
   get mensagemDecisao(): string {
     if (this.decisaoRegistrada === 'aprovado') {
       return this.mensagemAprovado;
@@ -184,6 +173,13 @@ export class AprovacaoComponent implements OnInit {
   }
 
   aprovar(): void {
+    // Página pode estar rolada pra baixo (lista longa de linhas) — sem isso o
+    // resultado do clique (mensagem de sucesso, card de erro de integração)
+    // fica fora da vista, parecendo que nada aconteceu. Pedido do usuário:
+    // "quando clicar em qualquer botão lá embaixo... tem que levar para o
+    // topo do iframe". Ver functions/scroll.ts — window.scrollTo sozinho não
+    // basta dentro do iframe do Cockpit.
+    scrollParaTopo();
     this.parecerInvalido = false;
     // Etapa Área Contábil (somenteIntegrar): antes de registrar a decisão,
     // chama o ERP de verdade (postLancamentos) — só segue com o fluxo normal
@@ -304,6 +300,7 @@ export class AprovacaoComponent implements OnInit {
   }
 
   negar(): void {
+    scrollParaTopo();
     if (!this.parecer.trim()) {
       this.parecerInvalido = true;
       this.enviaMensagem.emit({

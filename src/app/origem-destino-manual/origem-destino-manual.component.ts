@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { Mensagem } from '../interfaces/gerais.interface';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../interfaces/stc.interface';
 import { ServiceBpmService } from '../services/service-bpm.service';
 import { extrairLista } from '../functions/extrair-lista';
+import { gestoresDistintos } from '../functions/loop-gestor';
 
 // `p-calendar` (Data/Competência) trabalha com objeto `Date`, mas o resto do
 // app representa data como string "dd/mm/yyyy" (mesmo formato real do Por
@@ -106,14 +107,66 @@ export class OrigemDestinoManualComponent implements OnInit {
       naturezaOrigem: [null, Validators.required],
       valor: [null, [Validators.required, Validators.min(0.01)]],
       historicoOrigem: ['', Validators.required],
-      // Destino — numPrj/codFpj viram obrigatórios com a cascata (sem
-      // Projeto não tem como carregar Centro de Custo/Fase de destino).
-      ctaRedDestino: [null, Validators.required],
-      codCcuDestino: [null, Validators.required],
-      numPrjDestino: [null, Validators.required],
-      codFpjDestino: [null, Validators.required],
-      historicoDestino: ['', Validators.required],
+      // Destino — 1 origem pode virar N destinos (pedido do usuário em
+      // 2026-09-02: "tenho uma origem que coloquei 10.000 eu posso fazer 10
+      // destinos de 1.000") — FormArray em vez de campos únicos, cada linha
+      // com sua própria cascata Conta->Projeto->CC+Fase (ver
+      // criarDestinoGrupo()/observarCascataDestino() abaixo). Sempre começa
+      // com 1 linha (comportamento idêntico ao antigo "1 destino só" quando
+      // o usuário não adiciona mais nenhuma).
+      destinos: this.fb.array([this.criarDestinoGrupo()]),
     });
+  }
+
+  get destinosArray(): FormArray {
+    return this.form.get('destinos') as FormArray;
+  }
+
+  private criarDestinoGrupo(): FormGroup {
+    const grupo = this.fb.group({
+      ctaRed: [null, Validators.required],
+      numPrj: [null, Validators.required],
+      codCcu: [null, Validators.required],
+      codFpj: [null, Validators.required],
+      valor: [null, [Validators.required, Validators.min(0.01)]],
+      historico: ['', Validators.required],
+    });
+    this.observarCascataDestino(grupo);
+    return grupo;
+  }
+
+  // Mesma cascata Conta -> Projeto -> CC+Fase de DestinoComponent, só que por
+  // LINHA do FormArray em vez de um form único — chamado tanto pra linha
+  // inicial (constructor) quanto pras adicionadas via adicionarDestino().
+  private observarCascataDestino(grupo: FormGroup): void {
+    grupo.get('ctaRed')?.valueChanges.subscribe((ctaRed) => {
+      grupo.get('numPrj')?.reset(null, { emitEvent: false });
+      grupo.get('codCcu')?.reset(null, { emitEvent: false });
+      grupo.get('codFpj')?.reset(null, { emitEvent: false });
+      if (ctaRed) {
+        this.garantirProjetosDestinoCarregados(ctaRed);
+      }
+    });
+    grupo.get('numPrj')?.valueChanges.subscribe((numPrj) => {
+      grupo.get('codCcu')?.reset(null, { emitEvent: false });
+      grupo.get('codFpj')?.reset(null, { emitEvent: false });
+      const ctaRed = grupo.get('ctaRed')?.value;
+      if (numPrj && ctaRed) {
+        this.garantirSegmentoDestinoCarregado(ctaRed, numPrj);
+      }
+    });
+  }
+
+  adicionarDestino(): void {
+    this.destinosArray.push(this.criarDestinoGrupo());
+  }
+
+  // Mantém sempre pelo menos 1 destino — não faz sentido um lançamento sem
+  // nenhum destino.
+  removerDestino(index: number): void {
+    if (this.destinosArray.length > 1) {
+      this.destinosArray.removeAt(index);
+    }
   }
 
   get dadosFormulario(): Formulario {
@@ -149,13 +202,38 @@ export class OrigemDestinoManualComponent implements OnInit {
     return this.centrosCusto.find((c) => c.codCcu === codCcu)?.usuRes;
   }
 
-  get gestorDestinoSelecionado(): string | undefined {
-    const ctaRed = this.form.get('ctaRedDestino')?.value;
-    const numPrj = this.form.get('numPrjDestino')?.value;
-    const codCcu = this.form.get('codCcuDestino')?.value;
+  gestorDestinoDaLinha(grupo: AbstractControl): string | undefined {
+    const ctaRed = grupo.get('ctaRed')?.value;
+    const numPrj = grupo.get('numPrj')?.value;
+    const codCcu = grupo.get('codCcu')?.value;
     return this.centrosCustoDestinoDoSegmento(ctaRed, numPrj).find((c) => c.codCcu === codCcu)
       ?.usuRes;
   }
+
+  // === Totais/validação do split 1 origem -> N destinos (pedido do usuário
+  // em 2026-09-02) — a soma dos destinos precisa bater exatamente com o
+  // valor da origem antes de avançar. ===
+  get valorOrigem(): number {
+    return this.form.get('valor')?.value ?? 0;
+  }
+
+  get totalDestinos(): number {
+    return this.destinosArray.controls.reduce(
+      (total, c) => total + (c.get('valor')?.value ?? 0),
+      0
+    );
+  }
+
+  get saldoDestino(): number {
+    return this.valorOrigem - this.totalDestinos;
+  }
+
+  // Tolerância de ponto flutuante (mesmo padrão usado pra comparar valores
+  // monetários no resto do app).
+  get destinosBalanceados(): boolean {
+    return this.valorOrigem > 0 && Math.abs(this.saldoDestino) < 0.005;
+  }
+
 
   ngOnInit(): void {
     this.carregarListas();
@@ -165,29 +243,10 @@ export class OrigemDestinoManualComponent implements OnInit {
       this.aoTrocarProjeto(numPrj, 'codFpjOrigem');
     });
 
-    // Cascata de Destino (Conta -> Projeto -> CC+Fase), mesmo padrão de
-    // DestinoComponent.ngOnInit() — trocar a Conta zera Projeto/CC/Fase e
-    // busca os projetos daquela conta; trocar o Projeto zera CC/Fase e busca
-    // os dois juntos. `[disabled]` de cada campo no HTML vem do cache
-    // (projetosDestinoCarregados/segmentoDestinoCarregado), não precisa
-    // esperar a resposta aqui pra habilitar nada.
-    this.form.get('ctaRedDestino')?.valueChanges.subscribe((ctaRed) => {
-      this.form.get('numPrjDestino')?.reset(null, { emitEvent: false });
-      this.form.get('codCcuDestino')?.reset(null, { emitEvent: false });
-      this.form.get('codFpjDestino')?.reset(null, { emitEvent: false });
-      if (ctaRed) {
-        this.garantirProjetosDestinoCarregados(ctaRed);
-      }
-    });
-
-    this.form.get('numPrjDestino')?.valueChanges.subscribe((numPrj) => {
-      this.form.get('codCcuDestino')?.reset(null, { emitEvent: false });
-      this.form.get('codFpjDestino')?.reset(null, { emitEvent: false });
-      const ctaRed = this.form.get('ctaRedDestino')?.value;
-      if (numPrj && ctaRed) {
-        this.garantirSegmentoDestinoCarregado(ctaRed, numPrj);
-      }
-    });
+    // Cascata de cada linha de Destino (Conta -> Projeto -> CC+Fase) já foi
+    // ligada em criarDestinoGrupo()/observarCascataDestino() no momento em
+    // que cada FormGroup do FormArray é criado (linha inicial e as
+    // adicionadas via adicionarDestino()) — não precisa repetir aqui.
   }
 
   private aoTrocarProjeto(numPrj: string | null, campoFase: string): void {
@@ -449,18 +508,22 @@ export class OrigemDestinoManualComponent implements OnInit {
   }
 
   get segmentoDestinoValido(): boolean {
-    const v = this.form.getRawValue();
-    return !!(v.ctaRedDestino && v.numPrjDestino && v.codCcuDestino && v.codFpjDestino);
+    return this.destinosArray.controls.every((c) => {
+      const v = c.value;
+      return !!(v.ctaRed && v.numPrj && v.codCcu && v.codFpj);
+    });
   }
 
   get valorPositivo(): boolean {
-    return (this.form.get('valor')?.value ?? 0) > 0;
+    return this.valorOrigem > 0;
   }
 
   get equilibrioContabil(): boolean {
-    // Valor único no formulário — origem e destino sempre têm o mesmo valor
-    // aqui (RNM007: valores de origem e destino devem permanecer equilibrados).
-    return this.valorPositivo;
+    // RNM007: valores de origem e destino devem permanecer equilibrados —
+    // agora é a SOMA dos N destinos que precisa bater com o valor de origem,
+    // não mais 1 valor espelhado (split 1->N pedido pelo usuário em
+    // 2026-09-02, ver destinosBalanceados).
+    return this.destinosBalanceados;
   }
 
   // STC devolvida: `dadosFormulario.dados[0]`/`linhasDestino[0]` já guardam o
@@ -469,15 +532,21 @@ export class OrigemDestinoManualComponent implements OnInit {
   // códigos crus (mesmo padrão de `LinhaDestino`, ver stc.interface.ts), sem
   // precisar separar código de descrição.
   private restaurarForm(): void {
-    const origem = Array.isArray(this.dadosFormulario.dados)
-      ? this.dadosFormulario.dados[0]
-      : null;
-    const destino = Array.isArray(this.dadosFormulario.linhasDestino)
-      ? this.dadosFormulario.linhasDestino[0]
-      : null;
-    if (!origem && !destino) {
+    const origens = Array.isArray(this.dadosFormulario.dados) ? this.dadosFormulario.dados : [];
+    const destinos = Array.isArray(this.dadosFormulario.linhasDestino)
+      ? this.dadosFormulario.linhasDestino
+      : [];
+    const origem = origens[0];
+    if (!origem && !destinos.length) {
       return;
     }
+
+    // O valor TOTAL da origem nunca fica salvo separado — cada dados[i].valor
+    // é só a fatia daquele destino (ver avancarEtapa()) — reconstrói somando
+    // os destinos salvos.
+    const valorOrigem = destinos.length
+      ? destinos.reduce((total, d) => total + (d.valor ?? 0), 0)
+      : origem?.valor;
 
     this.form.patchValue(
       {
@@ -486,9 +555,8 @@ export class OrigemDestinoManualComponent implements OnInit {
         codCcuOrigem: origem?.codCcu ?? null,
         numPrjOrigem: origem?.numPrj ?? null,
         naturezaOrigem: origem?.natureza ?? null,
-        valor: origem?.valor ?? null,
+        valor: valorOrigem ?? null,
         historicoOrigem: origem?.historico ?? '',
-        historicoDestino: destino?.historico ?? '',
       },
       { emitEvent: false }
     );
@@ -499,25 +567,36 @@ export class OrigemDestinoManualComponent implements OnInit {
       this.garantirFasesCarregadas(origem.numPrj);
     }
 
-    // Segmento de Destino restaurado via cascata (mesmo padrão de
+    // Segmento de cada Destino restaurado via cascata (mesmo padrão de
     // DestinoComponent.restaurarModoEFormUnico()) — dispara a busca de
     // Projeto/CC/Fase pros valores salvos; reaplicarSegmentoDestinoRestaurado()
-    // reforça o valor assim que cada nível da cascata carregar.
-    if (destino?.ctaRed) {
+    // reforça o valor assim que cada nível da cascata carregar. Garante 1
+    // FormGroup por destino salvo (a 1ª linha já existe por padrão, ver
+    // criarDestinoGrupo() no constructor).
+    if (destinos.length) {
       this.segmentoDestinoRestaurado = true;
-      this.form.patchValue(
-        {
-          ctaRedDestino: destino.ctaRed,
-          codCcuDestino: destino.codCcu ?? null,
-          numPrjDestino: destino.numPrj ?? null,
-          codFpjDestino: destino.codFpj ?? null,
-        },
-        { emitEvent: false }
-      );
-      this.garantirProjetosDestinoCarregados(destino.ctaRed);
-      if (destino.numPrj) {
-        this.garantirSegmentoDestinoCarregado(destino.ctaRed, destino.numPrj);
+      while (this.destinosArray.length < destinos.length) {
+        this.destinosArray.push(this.criarDestinoGrupo());
       }
+      destinos.forEach((destino, i) => {
+        this.destinosArray.at(i).patchValue(
+          {
+            ctaRed: destino.ctaRed ?? null,
+            codCcu: destino.codCcu ?? null,
+            numPrj: destino.numPrj ?? null,
+            codFpj: destino.codFpj ?? null,
+            valor: destino.valor ?? null,
+            historico: destino.historico ?? '',
+          },
+          { emitEvent: false }
+        );
+        if (destino.ctaRed) {
+          this.garantirProjetosDestinoCarregados(destino.ctaRed);
+          if (destino.numPrj) {
+            this.garantirSegmentoDestinoCarregado(destino.ctaRed, destino.numPrj);
+          }
+        }
+      });
     }
   }
 
@@ -525,21 +604,24 @@ export class OrigemDestinoManualComponent implements OnInit {
     if (!this.segmentoDestinoRestaurado) {
       return;
     }
-    const destino = Array.isArray(this.dadosFormulario.linhasDestino)
-      ? this.dadosFormulario.linhasDestino[0]
-      : null;
-    if (!destino?.ctaRed) {
-      return;
-    }
-    this.form.patchValue(
-      {
-        ctaRedDestino: destino.ctaRed,
-        codCcuDestino: destino.codCcu ?? null,
-        numPrjDestino: destino.numPrj ?? null,
-        codFpjDestino: destino.codFpj ?? null,
-      },
-      { emitEvent: false }
-    );
+    const destinos = Array.isArray(this.dadosFormulario.linhasDestino)
+      ? this.dadosFormulario.linhasDestino
+      : [];
+    destinos.forEach((destino, i) => {
+      const grupo = this.destinosArray.at(i);
+      if (!grupo || !destino?.ctaRed) {
+        return;
+      }
+      grupo.patchValue(
+        {
+          ctaRed: destino.ctaRed,
+          codCcu: destino.codCcu ?? null,
+          numPrj: destino.numPrj ?? null,
+          codFpj: destino.codFpj ?? null,
+        },
+        { emitEvent: false }
+      );
+    });
   }
 
   avancarEtapa(): void {
@@ -552,6 +634,19 @@ export class OrigemDestinoManualComponent implements OnInit {
       return;
     }
 
+    // Split 1 origem -> N destinos (pedido do usuário em 2026-09-02): a soma
+    // dos destinos precisa bater exatamente com o valor de origem antes de
+    // avançar — "o saldo tem que ser igual".
+    if (!this.destinosBalanceados) {
+      this.enviaMensagem.emit({
+        tipo: 3,
+        mensagem: `A soma dos destinos (R$ ${this.totalDestinos.toFixed(
+          2
+        )}) precisa ser igual ao valor de origem (R$ ${this.valorOrigem.toFixed(2)}).`,
+      });
+      return;
+    }
+
     const v = this.form.getRawValue();
     const conta = (lista: { ctaRed: string; desCta: string }[], ctaRed: string) =>
       lista.find((c) => c.ctaRed === ctaRed);
@@ -560,24 +655,36 @@ export class OrigemDestinoManualComponent implements OnInit {
     const faseOrigem = this.fasesDoProjeto(v.numPrjOrigem).find(
       (f) => f.codFpj === v.codFpjOrigem
     );
-
     const contaOrigem = conta(this.contas, v.ctaRedOrigem);
-    const contaDestino = conta(this.contas, v.ctaRedDestino);
-    const centroDestino = this.centrosCustoDestinoDoSegmento(v.ctaRedDestino, v.numPrjDestino).find(
-      (c) => c.codCcu === v.codCcuDestino
-    );
-    const projetoDestino = this.projetosDestinoDaConta(v.ctaRedDestino).find(
-      (p) => p.numPrj === v.numPrjDestino
-    );
-    const faseDestino = this.fasesDestinoDoSegmento(v.ctaRedDestino, v.numPrjDestino).find(
-      (f) => f.codFpj === v.codFpjDestino
-    );
+    const dataFormatada = paraDataDDMMYYYY(v.dataCompetencia);
 
-    this.servico.dadosFormulario.dados = [
-      {
-        lancamento: 'MANUAL-1',
-        numLct: 'MANUAL-1',
-        datLct: paraDataDDMMYYYY(v.dataCompetencia),
+    // Cada destino vira seu próprio par origem/destino, ligados por
+    // `lancamento` (mesma chave que montarComparativo/functions/comparativo.ts
+    // já usa pra combinar Origem×Destino em todo o resto do app) — os N
+    // "origem" gerados são cópias da MESMA classificação de origem, só com a
+    // fatia de valor daquele destino (a soma sempre bate com o valor total
+    // digitado, validado acima). Reaproveita 100% do que Aprovação/Resumo/
+    // Impressão/postLancamentos já sabem fazer com múltiplas linhas, sem
+    // precisar mudar nenhuma dessas telas/funções.
+    const dadosOrigem: typeof this.servico.dadosFormulario.dados = [];
+    const linhasDestino: typeof this.servico.dadosFormulario.linhasDestino = [];
+    (v.destinos as any[]).forEach((d, i) => {
+      const lancamento = `MANUAL-1-${i + 1}`;
+      const contaDestino = conta(this.contas, d.ctaRed);
+      const centroDestino = this.centrosCustoDestinoDoSegmento(d.ctaRed, d.numPrj).find(
+        (c) => c.codCcu === d.codCcu
+      );
+      const projetoDestino = this.projetosDestinoDaConta(d.ctaRed).find(
+        (p) => p.numPrj === d.numPrj
+      );
+      const faseDestino = this.fasesDestinoDoSegmento(d.ctaRed, d.numPrj).find(
+        (f) => f.codFpj === d.codFpj
+      );
+
+      dadosOrigem!.push({
+        lancamento,
+        numLct: lancamento,
+        datLct: dataFormatada,
         ctaRed: v.ctaRedOrigem,
         desCta: contaOrigem?.desCta,
         codCcu: v.codCcuOrigem,
@@ -587,40 +694,43 @@ export class OrigemDestinoManualComponent implements OnInit {
         codFpj: v.codFpjOrigem,
         desFpj: faseOrigem?.desFpj,
         natureza: v.naturezaOrigem,
-        valor: v.valor,
+        valor: d.valor,
         historico: v.historicoOrigem,
         gestor: centroOrigem?.usuRes,
-      },
-    ];
+      });
 
-    this.servico.dadosFormulario.linhasDestino = [
-      {
-        lancamento: 'MANUAL-1',
-        ctaRed: v.ctaRedDestino,
+      linhasDestino!.push({
+        lancamento,
+        ctaRed: d.ctaRed,
         desCta: contaDestino?.desCta,
-        codCcu: v.codCcuDestino,
+        codCcu: d.codCcu,
         desCcu: centroDestino?.desCcu,
-        numPrj: v.numPrjDestino,
+        numPrj: d.numPrj,
         nomPrj: projetoDestino?.nomPrj,
-        codFpj: v.codFpjDestino,
+        codFpj: d.codFpj,
         desFpj: faseDestino?.desFpj,
         natureza: this.naturezaDestino,
-        valor: v.valor,
-        historico: v.historicoDestino,
+        valor: d.valor,
+        historico: d.historico,
         gestor: centroDestino?.usuRes,
-      },
-    ];
+      });
+    });
 
-    // No Manual, tanto origem quanto destino são escolhidos pelo usuário (sem
-    // gestor pronto do ERP como no Por Lote) — os dois resolvem pelo usuRes
-    // do Centro de Custo selecionado.
+    this.servico.dadosFormulario.dados = dadosOrigem;
+    this.servico.dadosFormulario.linhasDestino = linhasDestino;
+
+    // Origem continua com 1 gestor só (mesma linha de origem, replicada em
+    // cada par) — Destino agora pode ter até N gestores distintos (1 por
+    // destino), mesmo mecanismo de fila do Por Lote
+    // (DestinoComponent.avancarEtapa()), reaproveitado aqui pela 1ª vez no
+    // Manual.
     this.servico.dadosFormulario.usuarioGestorOrigem = centroOrigem?.usuRes;
-    this.servico.dadosFormulario.usuarioGestorDestino = centroDestino?.usuRes;
+    const gestoresDestino = gestoresDistintos(linhasDestino);
+    this.servico.dadosFormulario.usuarioGestorDestino = gestoresDestino[0];
 
     // Fila dos loops de gestor de origem/destino (ver Origem/DestinoComponent
-    // .avancarEtapa()) — no Manual sempre tem 1 gestor só de cada lado, mas
-    // reseta o histórico/flags do mesmo jeito, pra ficar consistente com o
-    // Por Lote.
+    // .avancarEtapa()) — reseta o histórico/flags do mesmo jeito, pra ficar
+    // consistente com o Por Lote.
     this.servico.dadosFormulario.pareceresGestorOrigem = [];
     this.servico.dadosFormulario.aprovadoGestorOrigem = undefined;
     this.servico.dadosFormulario.temProximoGestorOrigem = undefined;

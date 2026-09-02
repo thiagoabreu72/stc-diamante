@@ -36,57 +36,33 @@ Fica visível até o usuário clicar em "Fechar". -->
       <span>Resumo da Solicitação</span>
     </div>
   </ng-template>
-  <div class="grid">
-    <div class="col-12 lg:col-8">
-      <div class="grid formgrid">
-        <div class="field col-6 md:col-4">
-          <label class="block text-color-secondary">Número STC</label>
-          <span class="font-bold">{{ dadosFormulario.numeroStc || '-' }}</span>
-        </div>
-        <div class="field col-6 md:col-4">
-          <label class="block text-color-secondary">Modalidade</label>
-          <span class="font-bold">{{ dadosFormulario.tipoTransferencia || '-' }}</span>
-        </div>
-        <div class="field col-6 md:col-4" *ngIf="dadosFormulario.numLote">
-          <label class="block text-color-secondary">Lote</label>
-          <span class="font-bold">{{ dadosFormulario.numLote }}</span>
-        </div>
-        <div class="field col-6 md:col-4">
-          <label class="block text-color-secondary">Empresa/Filial</label>
-          <span class="font-bold"
-            >{{ dadosFormulario.codEmp || '-' }} - {{ dadosFormulario.nomEmp || '-' }} /
-            {{ dadosFormulario.codFil || '-' }} - {{ dadosFormulario.nomFil || '-' }}</span
-          >
-        </div>
-        <div class="field col-6 md:col-4">
-          <label class="block text-color-secondary">Solicitante</label>
-          <span class="font-bold">{{ dadosFormulario.solicitante || '-' }}</span>
-        </div>
-        <div class="field col-6 md:col-4">
-          <label class="block text-color-secondary">Etapa Atual</label>
-          <span class="font-bold">{{ titulo }}</span>
-        </div>
-      </div>
+  <div class="grid formgrid">
+    <div class="field col-6 md:col-4">
+      <label class="block text-color-secondary">Número STC</label>
+      <span class="font-bold">{{ dadosFormulario.numeroStc || '-' }}</span>
     </div>
-
-    <div class="col-12 lg:col-4">
-      <div class="resumo-financeiro">
-        <div class="resumo-financeiro-item">
-          <span class="resumo-financeiro-rotulo">Débito Total</span>
-          <span class="resumo-financeiro-valor">R$ {{ debitoTotal | moeda }}</span>
-        </div>
-        <div class="resumo-financeiro-item">
-          <span class="resumo-financeiro-rotulo">Crédito Total</span>
-          <span class="resumo-financeiro-valor">R$ {{ creditoTotal | moeda }}</span>
-        </div>
-        <div
-          class="resumo-financeiro-item resumo-financeiro-saldo"
-          [ngClass]="{ 'resumo-financeiro-divergente': saldo !== 0 }"
-        >
-          <span class="resumo-financeiro-rotulo">Saldo</span>
-          <span class="resumo-financeiro-valor">R$ {{ saldo | moeda }}</span>
-        </div>
-      </div>
+    <div class="field col-6 md:col-4">
+      <label class="block text-color-secondary">Modalidade</label>
+      <span class="font-bold">{{ dadosFormulario.tipoTransferencia || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-4" *ngIf="dadosFormulario.numLote">
+      <label class="block text-color-secondary">Lote</label>
+      <span class="font-bold">{{ dadosFormulario.numLote }}</span>
+    </div>
+    <div class="field col-6 md:col-4">
+      <label class="block text-color-secondary">Empresa/Filial</label>
+      <span class="font-bold"
+        >{{ dadosFormulario.codEmp || '-' }} - {{ dadosFormulario.nomEmp || '-' }} /
+        {{ dadosFormulario.codFil || '-' }} - {{ dadosFormulario.nomFil || '-' }}</span
+      >
+    </div>
+    <div class="field col-6 md:col-4">
+      <label class="block text-color-secondary">Solicitante</label>
+      <span class="font-bold">{{ dadosFormulario.solicitante || '-' }}</span>
+    </div>
+    <div class="field col-6 md:col-4">
+      <label class="block text-color-secondary">Etapa Atual</label>
+      <span class="font-bold">{{ titulo }}</span>
     </div>
   </div>
 
@@ -111,7 +87,7 @@ Fica visível até o usuário clicar em "Fechar". -->
             <ng-template pTemplate="header">
               <tr>
                 <th style="width: 3rem"></th>
-                <th>Linha</th>
+                <th>Lançamento</th>
                 <th>Conta Origem</th>
                 <th>Conta Destino</th>
                 <th>Natureza Destino</th>

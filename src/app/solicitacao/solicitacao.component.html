@@ -43,20 +43,20 @@ o passo é alcançado — depois disso também ficam vivos, só escondidos. -->
   (proximaEtapa)="onDestinoAvancar()"
 ></app-destino>
 
-<!-- Modo Manual: Origem+Destino na mesma tela, mostrada nos passos 1 e 2. -->
+<!-- Modo Manual: Origem+Destino na mesma tela, 1 passo só (índice 1) do stepper. -->
 <app-origem-destino-manual
   *ngIf="origemDestinoManualVisitado"
-  [hidden]="passoAtivo !== 1 && passoAtivo !== 2"
+  [hidden]="passoAtivo !== 1"
   (enviaMensagem)="enviaMensagem.emit($event)"
   (voltar)="voltarPara(0)"
   (proximaEtapa)="onOrigemDestinoManualAvancar()"
 ></app-origem-destino-manual>
 
-<!-- Por Lote: resumo só no passo 4 ("Resumo"). Manual: passo 3 ("Confirmação"),
+<!-- Por Lote: resumo só no passo 4 ("Resumo"). Manual: passo 2 ("Confirmação"),
 único passo final já que não há tela de aprovação separada aqui. -->
 <app-resumo
   *ngIf="resumoVisitado"
-  [hidden]="passoAtivo !== (ehManual ? 3 : 4)"
+  [hidden]="passoAtivo !== (ehManual ? 2 : 4)"
   (enviaMensagem)="enviaMensagem.emit($event)"
   (voltar)="voltarPara(ehManual ? 1 : 3)"
 ></app-resumo>

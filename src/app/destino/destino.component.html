@@ -77,33 +77,6 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="numPrj"
-            >Projeto Destino *
-            <i
-              class="pi pi-spinner pi-spin text-color-secondary"
-              *ngIf="carregandoProjetos(formUnico.get('ctaRed')?.value)"
-            ></i
-          ></label>
-          <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
-            inputId="numPrj"
-            formControlName="numPrj"
-            [disabled]="!projetosCarregados(formUnico.get('ctaRed')?.value)"
-            [options]="projetosDaConta(formUnico.get('ctaRed')?.value)"
-            optionValue="numPrj"
-            filterBy="numPrj,nomPrj"
-            [placeholder]="placeholderProjeto(formUnico.get('ctaRed')?.value)"
-            [filter]="true"
-            [showClear]="true"
-            [autoDisplayFirst]="false"
-          >
-            <ng-template let-p pTemplate="item">{{ p.numPrj }} - {{ p.nomPrj }}</ng-template>
-            <ng-template let-p pTemplate="selectedItem"
-              >{{ p.numPrj }} - {{ p.nomPrj }}</ng-template
-            >
-          </p-dropdown>
-        </div>
-
-        <div class="field col-12 md:col-6">
           <label for="codCcu"
             >Centro de Custo Destino *
             <i
@@ -129,6 +102,33 @@
             >
           </p-dropdown>
           <small class="text-color-secondary">Só aparecem Centros de Custo com gestor cadastrado.</small>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="numPrj"
+            >Projeto Destino *
+            <i
+              class="pi pi-spinner pi-spin text-color-secondary"
+              *ngIf="carregandoProjetos(formUnico.get('ctaRed')?.value)"
+            ></i
+          ></label>
+          <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
+            inputId="numPrj"
+            formControlName="numPrj"
+            [disabled]="!projetosCarregados(formUnico.get('ctaRed')?.value)"
+            [options]="projetosDaConta(formUnico.get('ctaRed')?.value)"
+            optionValue="numPrj"
+            filterBy="numPrj,nomPrj"
+            [placeholder]="placeholderProjeto(formUnico.get('ctaRed')?.value)"
+            [filter]="true"
+            [showClear]="true"
+            [autoDisplayFirst]="false"
+          >
+            <ng-template let-p pTemplate="item">{{ p.numPrj }} - {{ p.nomPrj }}</ng-template>
+            <ng-template let-p pTemplate="selectedItem"
+              >{{ p.numPrj }} - {{ p.nomPrj }}</ng-template
+            >
+          </p-dropdown>
         </div>
 
         <div class="field col-12 md:col-6">
@@ -185,8 +185,8 @@
           <tr>
             <th>Lançamento</th>
             <th>Conta Destino</th>
-            <th>Projeto Destino</th>
             <th>Centro de Custo Destino</th>
+            <th>Projeto Destino</th>
             <th>Fase Destino</th>
             <th>Natureza</th>
             <th>Valor</th>
@@ -216,6 +216,26 @@
             <td>
               <span class="flex align-items-center gap-2">
                 <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
+                  [disabled]="!segmentoCarregado(linha.ctaRed, linha.numPrj)"
+                  [options]="centrosCustoDoSegmento(linha.ctaRed, linha.numPrj)"
+                  [(ngModel)]="linha.codCcu"
+                  optionValue="codCcu"
+                  filterBy="codCcu,desCcu"
+                  [filter]="true"
+                  [placeholder]="placeholderCC(linha.ctaRed, linha.numPrj)"
+                  [autoDisplayFirst]="false"
+                >
+                  <ng-template let-c pTemplate="item">{{ c.codCcu }} - {{ c.desCcu }}</ng-template>
+                  <ng-template let-c pTemplate="selectedItem"
+                    >{{ c.codCcu }} - {{ c.desCcu }}</ng-template
+                  >
+                </p-dropdown>
+                <i class="pi pi-spinner pi-spin text-color-secondary" *ngIf="carregandoSegmento(linha.ctaRed, linha.numPrj)"></i>
+              </span>
+            </td>
+            <td>
+              <span class="flex align-items-center gap-2">
+                <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
                   [disabled]="!projetosCarregados(linha.ctaRed)"
                   [options]="projetosDaConta(linha.ctaRed)"
                   [ngModel]="linha.numPrj"
@@ -232,26 +252,6 @@
                   >
                 </p-dropdown>
                 <i class="pi pi-spinner pi-spin text-color-secondary" *ngIf="carregandoProjetos(linha.ctaRed)"></i>
-              </span>
-            </td>
-            <td>
-              <span class="flex align-items-center gap-2">
-                <p-dropdown [appendTo]="'body'" [virtualScroll]="true" [virtualScrollItemSize]="38"
-                  [disabled]="!segmentoCarregado(linha.ctaRed, linha.numPrj)"
-                  [options]="centrosCustoDoSegmento(linha.ctaRed, linha.numPrj)"
-                  [(ngModel)]="linha.codCcu"
-                  optionValue="codCcu"
-                  filterBy="codCcu,desCcu"
-                  [filter]="true"
-                  [placeholder]="placeholderCC(linha.ctaRed, linha.numPrj)"
-                  [autoDisplayFirst]="false"
-                >
-                  <ng-template let-c pTemplate="item">{{ c.codCcu }} - {{ c.desCcu }}</ng-template>
-                  <ng-template let-c pTemplate="selectedItem"
-                    >{{ c.codCcu }} - {{ c.desCcu }}</ng-template
-                  >
-                </p-dropdown>
-                <i class="pi pi-spinner pi-spin text-color-secondary" *ngIf="carregandoSegmento(linha.ctaRed, linha.numPrj)"></i>
               </span>
             </td>
             <td>
@@ -301,30 +301,6 @@
         A combinação Conta + CC + Projeto + Fase será validada no ERP Senior no momento do
         processamento.
       </p>
-    </p-card>
-
-    <p-card header="Resumo do Destino" styleClass="mt-3">
-      <div class="flex justify-content-between py-1 mb-2">
-        <span class="text-color-secondary">Total de linhas</span>
-        <span class="font-bold">{{ linhasOrigem.length }}</span>
-      </div>
-      <div class="resumo-financeiro">
-        <div class="resumo-financeiro-item">
-          <span class="resumo-financeiro-rotulo">Débito Total</span>
-          <span class="resumo-financeiro-valor">R$ {{ debitoTotal | moeda }}</span>
-        </div>
-        <div class="resumo-financeiro-item">
-          <span class="resumo-financeiro-rotulo">Crédito Total</span>
-          <span class="resumo-financeiro-valor">R$ {{ creditoTotal | moeda }}</span>
-        </div>
-        <div
-          class="resumo-financeiro-item resumo-financeiro-saldo"
-          [ngClass]="{ 'resumo-financeiro-divergente': saldo !== 0 }"
-        >
-          <span class="resumo-financeiro-rotulo">Saldo</span>
-          <span class="resumo-financeiro-valor">R$ {{ saldo | moeda }}</span>
-        </div>
-      </div>
     </p-card>
   </div>
 </div>

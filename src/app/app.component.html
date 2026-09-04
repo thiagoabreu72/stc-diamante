@@ -1,5 +1,9 @@
 <div>
   <div style="padding: 1% 1%">
+    <!-- Âncora fixa usada por scrollParaTopo() (functions/scroll.ts) —
+    sempre no topo do conteúdo renderizado por este app, independente de
+    qual passo do wizard/tela está ativo. -->
+    <span id="topo-app"></span>
     <app-mensagem [dadosMensagem]="this.dadosMensagem"></app-mensagem>
 
     <app-solicitacao

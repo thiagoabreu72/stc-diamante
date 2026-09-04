@@ -1,17 +1,21 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { Mensagem } from '../interfaces/gerais.interface';
 import { ServiceBpmService } from '../services/service-bpm.service';
+import { scrollParaTopo } from '../functions/scroll';
 
 // Ordem confirmada nos mockups do cliente (seção 10.2/10.3 dos requisitos).
-// No modo Manual, "Origem Manual" e "Destino Manual" aparecem na mesma tela
-// (mesmo componente exibido nos passos 1 e 2) — ver OrigemDestinoManualComponent.
-// Último passo é só "Confirmação" (revisão do que foi escrito antes de enviar
-// pelo BPM) — não existe etapa de aprovação aqui, isso só acontece depois, nas
-// tarefas separadas do fluxo BPM (AprovacaoComponent). Até 2026-08-24 esse
-// passo estava duplicado ("Aprovações" + "Confirmação", 2 nomes pro mesmo
-// `ResumoComponent`) e o segundo nunca era alcançável — corrigido pra 1 só.
+// No modo Manual, Origem e Destino são preenchidos na MESMA tela (1 único
+// componente, OrigemDestinoManualComponent) — o stepper reflete isso com 1
+// passo só (não 2 rótulos pro mesmo passo, como já foi no passado: bug real
+// reportado pelo usuário em 2026-09-02, "no manual temos só 3 etapas e lá tá
+// aparecendo 4"). Último passo é só "Confirmação" (revisão do que foi
+// escrito antes de enviar pelo BPM) — não existe etapa de aprovação aqui,
+// isso só acontece depois, nas tarefas separadas do fluxo BPM
+// (AprovacaoComponent). Até 2026-08-24 esse passo estava duplicado
+// ("Aprovações" + "Confirmação", 2 nomes pro mesmo `ResumoComponent`) e o
+// segundo nunca era alcançável — corrigido pra 1 só.
 const PASSOS_POR_LOTE = ['Modalidade', 'Consulta do Lote', 'Origem', 'Destino', 'Resumo'];
-const PASSOS_MANUAL = ['Modalidade', 'Origem Manual', 'Destino Manual', 'Confirmação'];
+const PASSOS_MANUAL = ['Modalidade', 'Origem e Destino Manual', 'Confirmação'];
 
 @Component({
   selector: 'app-solicitacao',
@@ -46,7 +50,7 @@ export class SolicitacaoComponent {
       if (!dados?.parecerOrcamentaria || this.maiorPassoAlcancado > 0) {
         return;
       }
-      this.maiorPassoAlcancado = this.ehManual ? 3 : 4;
+      this.maiorPassoAlcancado = this.ehManual ? 2 : 4;
     });
   }
 
@@ -75,7 +79,7 @@ export class SolicitacaoComponent {
   }
 
   get resumoVisitado(): boolean {
-    return this.ehManual ? this.maiorPassoAlcancado >= 3 : this.maiorPassoAlcancado >= 4;
+    return this.ehManual ? this.maiorPassoAlcancado >= 2 : this.maiorPassoAlcancado >= 4;
   }
 
   // Chaves passadas como @Input pros passos que ficam vivos entre navegações
@@ -124,9 +128,9 @@ export class SolicitacaoComponent {
     this.avancarPara(4);
   }
 
-  // Manual não tem passo de Destino separado — avança direto pra "Aprovações".
+  // Manual não tem passo de Destino separado — avança direto pra "Confirmação".
   onOrigemDestinoManualAvancar(): void {
-    this.avancarPara(3);
+    this.avancarPara(2);
   }
 
   voltarPara(passo: number): void {
@@ -156,9 +160,13 @@ export class SolicitacaoComponent {
   // de página nenhuma, então o scroll fica exatamente onde estava na tela
   // anterior. Se o passo anterior estava rolado pra baixo (ex: tabela longa de
   // Destino) e o próximo é mais curto, ele aparece "em branco" até rolar pra
-  // cima manualmente. Corrigido rolando pro topo a cada troca de passo.
+  // cima manualmente. Corrigido rolando pro topo a cada troca de passo — mas
+  // `window.scrollTo` sozinho não bastava (bug real reportado pelo usuário em
+  // 2026-09-02: "cliquei em avançar e não subiu de volta"), ver
+  // functions/scroll.ts pro motivo (min-height:200000px faz quem realmente
+  // rola ser a página do Cockpit, não a janela deste app).
   private irPara(passo: number): void {
     this.passoAtivo = passo;
-    window.scrollTo(0, 0);
+    scrollParaTopo();
   }
 }
